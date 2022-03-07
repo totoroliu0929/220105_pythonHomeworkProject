@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 
 r = requests.get("https://tw.stock.yahoo.com/quote/2634.TW/dividend")
 soup = BeautifulSoup(r.text,"html.parser")
-u = soup.select("#main-2-QuoteDividend-Proxy .table-body-wrapper li div:nth-of-type(1)")
+u = soup.select("#main-2-QuoteDividend-Proxy .table-body-wrapper li div.Ta\(start\)")
 print(u[0])
 print(len(u))
 
