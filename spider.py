@@ -15,9 +15,9 @@ class spider:
         u1 = soup.select("#main-2-QuoteProfile-Proxy section:nth-of-type(1) span>span")
         u2 = soup.select("#main-2-QuoteProfile-Proxy section:nth-of-type(1) span+div")
         for i in range(len(u1)):
-            print(u1[i].text,u2[i].text)
-            self.listProfile[f"{u1[i].text}"] = f"{u2[i].text}"
-        print(self.listProfile)
+            #print(u1[i].text,u2[i].text)
+            self.listProfile[u1[i].text] = u2[i].text
+        #print(self.listProfile)
 
     def dividend(self):
         r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/dividend".format(self.id))
