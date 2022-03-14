@@ -2,8 +2,8 @@ from spider import Spider,Data
 import time
 
 x = Spider("2330")
-#x.getGrossMargin() #取得毛利率
-#x.getEps() #取得eps
+x.getGrossMargin() #取得毛利率
+x.getEps() #取得eps
 #x.getProfile() #取得基本資料
 x.gerDividend() #取得股利資料
 #x.getCompany() #取得上市公司名單

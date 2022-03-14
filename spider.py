@@ -9,6 +9,7 @@ class Spider:
         self.listProfile = dict()
         self.listDividend = dict()
         self.listEps = dict()
+        self.listProfit = dict()
         self.listCompany = dict()
 
     def getProfile(self):
@@ -114,19 +115,55 @@ class Data:
             return
         return conn
 
+    def createProfitTable(self, conn, id):
+        sql = '''
+            CREATE TABLE IF NOT EXISTS profit{}(
+                quarter TEXT PRIMARY KEY,
+                income REAL,
+                gross_profit REAL,
+                gross_margin REAL,
+                EPS REAL
+            );
+            '''.format(id)
+
+        cursor = conn.cursor()
+        try:
+            cursor.execute(sql)
+        except sqlite3Error as e:
+            print(e)
+
+    def replaceProfitData(self, conn, item, id):
+        sql = '''
+        INSERT or replace INTO 
+        profit{}(quarter,income,gross_profit,gross_margin,EPS)
+        VALUES( ?,?,?,?,?)
+        '''.format(id)
+
+        try:
+            curser = conn.cursor()
+            quarter = item['quarter']
+            income = item['income']
+            gross_profit = item['gross_profit']
+            gross_margin = item['gross_margin']
+            EPS = item['EPS']
+            curser.execute(sql, (quarter, income, gross_profit, gross_margin, EPS))
+        except  sqlite3Error as e:
+            print(e)
+        conn.commit()
+
     def createStockTable(self, conn):
         sql = '''
             CREATE TABLE IF NOT EXISTS stock(
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            price TEXT,
-            time_to_market TEXT,
-            classification TEXT,
-            share_capital TEXT,
-            IHOLD TEXT,
-            update_time INTEGER,
-            UNIQUE (name)
-        );
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                price TEXT,
+                time_to_market TEXT,
+                classification TEXT,
+                share_capital TEXT,
+                IHOLD TEXT,
+                update_time INTEGER,
+                UNIQUE (name)
+            );
             '''
         cursor = conn.cursor()
         try:
