@@ -303,7 +303,7 @@ class Data:
             print(e)
         conn.commit()
 
-    def checkCount(self, conn, id):
+    def checkStockCount(self, conn, id):
         sql = '''
         SELECT count(*)
         FROM stock
@@ -343,7 +343,7 @@ class Data:
                 self.createStockTable(conn)
                 ctype = 99
                 stock = self.getStockData(conn, item['id'])
-                if self.checkCount(conn, item['id']) == 0:
+                if self.checkStockCount(conn, item['id']) == 0:
                     ctype = 0
                 elif update_time - 7 > stock[9] or (time.gmtime().tm_mday % 5 == 0 and update_time != stock[9]):
                     ctype = 0
