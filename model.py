@@ -126,7 +126,7 @@ class Data:
 
     def createProfitTable(self, conn, id):
         sql = '''
-            CREATE TABLE IF NOT EXISTS profit{}(
+            CREATE TABLE IF NOT EXISTS profit_{}(
                 quarter TEXT PRIMARY KEY,
                 income REAL,
                 gross_profit REAL,
@@ -144,7 +144,7 @@ class Data:
     def replaceProfitData(self, conn, item, id):
         sql = '''
         INSERT or replace INTO 
-        profit{}(quarter,income,gross_profit,gross_margin,EPS)
+        profit_{}(quarter,income,gross_profit,gross_margin,EPS)
         VALUES( ?,?,?,?,?)
         '''.format(id)
 
