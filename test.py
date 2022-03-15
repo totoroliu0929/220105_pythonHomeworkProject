@@ -3,9 +3,9 @@ import time
 
 x = Spider("2330")
 #x.getGrossMargin() #取得毛利率
-y = x.getEps().values() #取得eps
+'''y = x.getEps().values() #取得eps
 for item in list(y):
-    print(item)
+    print(item)'''
 #x.getProfile() #取得基本資料
 #x.gerDividend() #取得股利資料
 #x.getCompany() #取得上市公司名單
@@ -13,6 +13,8 @@ for item in list(y):
 
 #Spider().getCompany()
 #Data().updateCompanyInfo() #抓取所有上市公司的資料，會執行很久
+
+Data().updateProfitInfo("2330")
 
 
 conn = Data().createConnection()

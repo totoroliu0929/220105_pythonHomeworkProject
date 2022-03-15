@@ -155,7 +155,7 @@ class Data:
         except sqlite3Error as e:
             print(e)
 
-    def replaceProfitData(self, conn, item, id):
+    def replaceProfitData(self, conn, dataList, id):
         sql = '''
         INSERT or replace INTO 
         profit_{}(quarter,income,gross_profit,gross_margin,EPS)
@@ -164,15 +164,24 @@ class Data:
 
         try:
             curser = conn.cursor()
-            quarter = item['quarter']
-            income = item['income']
-            gross_profit = item['gross_profit']
-            gross_margin = item['gross_margin']
-            EPS = item['EPS']
-            curser.execute(sql, (quarter, income, gross_profit, gross_margin, EPS))
+            for item in dataList.values():
+                print(item)
+                quarter = item['quarter']
+                income = item['income']
+                gross_profit = item['gross_profit']
+                gross_margin = item['gross_margin']
+                EPS = item['EPS']
+                curser.execute(sql, (quarter, income, gross_profit, gross_margin, EPS))
         except  sqlite3Error as e:
             print(e)
         conn.commit()
+
+    def updateProfitInfo(self, id):
+        r = Spider(id).getEps()
+        conn = self.createConnection()
+        with conn:
+            self.createProfitTable(conn, id)
+            self.replaceProfitData(conn, r, id)
 
     def createStockTable(self, conn):
         sql = '''
@@ -252,7 +261,6 @@ class Data:
         return row
 
     def updateCompanyInfo(self):
-        import time
         for item in list(self.listInfo.values()):
             # print(item)
             conn = self.createConnection()
