@@ -26,29 +26,6 @@ class Spider:
         else:
             return None
 
-    def gerDividend(self):
-        r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/dividend".format(self.id))
-        if r.status_code == 200:
-            soup = BeautifulSoup(r.text, "html.parser")
-            u1 = soup.select("#main-2-QuoteDividend-Proxy .table-body-wrapper li div.Ta\(start\)")
-            u2 = soup.select("#main-2-QuoteDividend-Proxy .table-body-wrapper li.List\(n\) div:nth-of-type(2) span")
-            u3 = soup.select("#main-2-QuoteDividend-Proxy .table-body-wrapper li.List\(n\) div:nth-of-type(3) span")
-            for i in range(len(u1)):
-                # item = [u1[i].text,u2[i].text,u3[i].text]
-                # self.listDividend.append(item)
-                if u1[i].text[0:4:1] in self.listDividend:
-                    self.listDividend[u1[i].text[0:4:1]]["次數"] += 1
-                    self.listDividend[u1[i].text[0:4:1]]["現金股利"] += float(u2[i].text)
-                    self.listDividend[u1[i].text[0:4:1]]["股票股利"] += float(u3[i].text)
-                    print(u1[i].text, float(u2[i].text), float(u3[i].text))
-                else:
-                    self.listDividend[u1[i].text[0:4:1]] = {"年度": u1[i].text[0:4:1], "次數": 1, "現金股利": float(u2[i].text),
-                                                            "股票股利": float(u3[i].text)}
-                    print(u1[i].text, float(u2[i].text), float(u3[i].text))
-            print(self.listDividend)
-        else:
-            return None
-
     def getGrossMargin(self):
         r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/income-statement".format(self.id))
         if r.status_code == 200:
@@ -62,34 +39,84 @@ class Spider:
                 grossProfit = int(u3[i].text.replace(",", ""))
                 grossMargin = grossProfit / income
                 # print(quarter,income,gross_profit,gross_margin)
-                self.listProfit[quarter] = {"quarter": quarter, "income": income, "gross_profit": grossProfit,
-                                            "gross_margin": grossMargin}
+                self.listProfit[quarter] = {"quarter": quarter, "income": income, "gross_profit": grossProfit, "gross_margin": grossMargin}
+                year = quarter[0:4:1]
+                if year in self.listDividend:
+                    income += income
+                    grossProfit += grossProfit
+                    grossMargin = grossProfit / income
+                    self.listDividend[year]["income"] = income
+                    self.listDividend[year]["gross_profit"] = grossProfit
+                    self.listDividend[year]["gross_margin"] = grossMargin
+                else:
+                    self.listDividend[year] = {"year": year, "income": income, "gross_profit": grossProfit, "gross_margin": grossMargin, "EPS": 0, "cash_dividends": 0.0, "stock_dividends": 0.0}
+            return True
         else:
             return None
 
     def getEps(self):
-        self.getGrossMargin()
         r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/eps".format(self.id))
-        soup = BeautifulSoup(r.text, "html.parser")
-        u1 = soup.select("#qsp-eps-table li.List\(n\)>div>div:nth-of-type(1)")
-        u2 = soup.select("#qsp-eps-table li.List\(n\)>div>div:nth-of-type(2)")
-        for i in range(len(u1)):
-            quarter = u1[i].text.replace(" ", "")
-            eps = float(u2[i].text)
-            if quarter in self.listProfit:
-                self.listProfit[quarter]["EPS"] = eps
-            else:
-                self.listProfit[quarter] = {"quarter": quarter, "income": 0.0, "gross_profit": 0.0, "gross_margin": 0.0,
-                                            "EPS": eps}
-            if u1[i].text[0:4:1] in self.listEps:
-                self.listEps[u1[i].text[0:4:1]]["次數"] += 1
-                self.listEps[u1[i].text[0:4:1]]["每股盈餘"] += eps
-                #print(u1[i].text, eps)
-            else:
-                self.listEps[u1[i].text[0:4:1]] = {"年度": u1[i].text[0:4:1], "次數": 1, "每股盈餘": eps}
-                #print(u1[i].text, eps)
-        print(self.listEps)
-        return self.listProfit
+        if r.status_code == 200:
+            soup = BeautifulSoup(r.text, "html.parser")
+            u1 = soup.select("#qsp-eps-table li.List\(n\)>div>div:nth-of-type(1)")
+            u2 = soup.select("#qsp-eps-table li.List\(n\)>div>div:nth-of-type(2)")
+            for i in range(len(u1)):
+                quarter = u1[i].text.replace(" ", "")
+                eps = float(u2[i].text)
+                if quarter in self.listProfit:
+                    self.listProfit[quarter]["EPS"] = eps
+                else:
+                    self.listProfit[quarter] = {"quarter": quarter, "income": 0.0, "gross_profit": 0.0, "gross_margin": 0.0, "EPS": eps, "cash_dividends": 0.0, "stock_dividends": 0.0}
+                year = quarter[0:4:1]
+                if year in self.listDividend:
+                    self.listDividend[year]["EPS"] += eps
+                    #print(u1[i].text, eps)
+                else:
+                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "gross_margin": 0.0, "EPS": eps}
+                    #print(u1[i].text, eps)
+            #print(self.listDividend)
+            #return self.listProfit
+            return True
+        else:
+            return None
+
+    def gerDividend(self):
+        r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/dividend".format(self.id))
+        if r.status_code == 200:
+            soup = BeautifulSoup(r.text, "html.parser")
+            u1 = soup.select("#main-2-QuoteDividend-Proxy .table-body-wrapper li div.Ta\(start\)")
+            u2 = soup.select("#main-2-QuoteDividend-Proxy .table-body-wrapper li.List\(n\) div:nth-of-type(2) span")
+            u3 = soup.select("#main-2-QuoteDividend-Proxy .table-body-wrapper li.List\(n\) div:nth-of-type(3) span")
+            for i in range(len(u1)):
+                # item = [u1[i].text,u2[i].text,u3[i].text]
+                # self.listDividend.append(item)
+                year = u1[i].text[0:4:1]
+                try:
+                    cashDividends = float(u2[i].text)
+                except:
+                    cashDividends = 0.0
+                try:
+                    stockDividends = float(u3[i].text)
+                except:
+                    stockDividends = 0.0
+                if year in self.listDividend:
+                    self.listDividend[year]["cash_dividends"] += cashDividends
+                    self.listDividend[year]["stock_dividends"] += stockDividends
+                    #print(u1[i].text, float(u2[i].text), float(u3[i].text))
+                else:
+                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "gross_margin": 0.0, "EPS": 0.0, "cash_dividends": cashDividends, "stock_dividends": stockDividends}
+                    #print(u1[i].text, float(u2[i].text), float(u3[i].text))
+            #print(self.listDividend)
+            #return self.listDividend
+            return True
+        else:
+            return None
+
+    def getProfit(self):
+        if self.getGrossMargin() is not None and self.getEps() is not None and self.gerDividend() is not None:
+            return self.listDividend, self.listProfit
+        else:
+            return None
 
     def getCompany(self):
         url = 'https://www.twse.com.tw/exchangeReport/BWIBBU_d?response=open_data'
@@ -110,7 +137,6 @@ class Spider:
         url = 'https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL?response=open_data'
         webpage = urllib.request.urlopen(url)
         data = csv.reader(webpage.read().decode('utf-8').splitlines())
-        self.getCompany()
         for i in data:
             # print('證券代號->',i[0],'證券名稱=',i[1], '成交股數=',i[2], '成交金額=',i[3],'開盤價=',i[4], '最高價=',i[5],'最低價=',i[6], '收盤價=',i[7], '漲跌價差=',i[8], '成交筆數=',i[9])
             if i[0] in self.listCompany:
@@ -119,7 +145,12 @@ class Spider:
             if i[0] == "":
                 break
         # print(self.listCompany)
+
+    def getStockInfo(self):
+        self.getCompany()
+        self.getPrice()
         return self.listCompany
+
 
 
 class Data:
@@ -155,7 +186,7 @@ class Data:
         except sqlite3Error as e:
             print(e)
 
-    def replaceProfitData(self, conn, dataList, id):
+    def replaceProfitData(self, conn, id, dataList):
         sql = '''
         INSERT or replace INTO 
         profit_{}(quarter,income,gross_profit,gross_margin,EPS)
@@ -176,12 +207,55 @@ class Data:
             print(e)
         conn.commit()
 
-    def updateProfitInfo(self, id):
-        r = Spider(id).getEps()
+    def createDividendTable(self, conn, id):
+        sql = '''
+            CREATE TABLE IF NOT EXISTS dividend_{}(
+                year TEXT PRIMARY KEY,
+                income INTEGER,
+                gross_profit INTEGER,
+                gross_margin REAL,
+                EPS REAL,
+                cash_dividends REAL,
+                stock_dividends REAL
+            );
+            '''.format(id)
+        cursor = conn.cursor()
+        try:
+            cursor.execute(sql)
+        except sqlite3Error as e:
+            print(e)
+
+    def replaceDividendData(self, conn, id, dataList):
+        sql = '''
+        INSERT or replace INTO 
+        dividend_{}(year,income,gross_profit,gross_margin,EPS,cash_dividends,stock_dividends)
+        VALUES( ?,?,?,?,?,?,?)
+        '''.format(id)
+
+        try:
+            curser = conn.cursor()
+            for item in dataList.values():
+                print(item)
+                year = item['year']
+                income = item['income']
+                gross_profit = item['gross_profit']
+                gross_margin = item['gross_margin']
+                EPS = item['EPS']
+                cash_dividends = item['cash_dividends']
+                stock_dividends = item['stock_dividends']
+                curser.execute(sql, (year, income, gross_profit, gross_margin, EPS, cash_dividends, stock_dividends))
+        except  sqlite3Error as e:
+            print(e)
+        conn.commit()
+
+    def updateProfitAndDividendInfo(self, id):
+        dividend, profit = Spider(id).getProfit()
         conn = self.createConnection()
         with conn:
             self.createProfitTable(conn, id)
-            self.replaceProfitData(conn, r, id)
+            self.replaceProfitData(conn, id, profit)
+            self.createDividendTable(conn, id)
+            self.replaceDividendData(conn, id, dividend)
 
     def createStockTable(self, conn):
         sql = '''
@@ -279,7 +353,7 @@ class Data:
                 if ctype == 99:
                     return
                 elif ctype == 0:
-                    newInfo = Spider(item['id']).getProfile()
+                    newInfo = Spider(item['id']).getStockInfo()
                     item['time_to_market'] = newInfo['上市時間'] or ""
                     item['classification'] = newInfo['產業類別'] or ""
                     item['share_capital'] = newInfo['股本'] or "0"
