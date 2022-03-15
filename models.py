@@ -88,7 +88,7 @@ class Spider:
             else:
                 self.listEps[u1[i].text[0:4:1]] = {"年度": u1[i].text[0:4:1], "次數": 1, "每股盈餘": eps}
                 #print(u1[i].text, eps)
-        #print(self.listEps)
+        print(self.listEps)
         return self.listProfit
 
     def getCompany(self):
