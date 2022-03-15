@@ -1,4 +1,4 @@
-from model import Spider,Data
+from models import Spider,Data
 import time
 
 x = Spider("2330")
