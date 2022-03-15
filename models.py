@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import urllib.request, csv, sqlite3, time
 from sqlite3 import Error as sqlite3Error
 
-
 class Spider:
     def __init__(self, id: str = None):
         self.id = id
