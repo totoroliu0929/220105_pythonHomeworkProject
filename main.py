@@ -1,5 +1,5 @@
 #!/usr/bin/python3.10
-from spider import Spider
+from model import Spider
 
 if __name__ == '__main__':
     pass

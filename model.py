@@ -82,9 +82,15 @@ class Spider:
         webpage = urllib.request.urlopen(url)
         data = csv.reader(webpage.read().decode('utf-8').splitlines())
         for i in data:
+            if i[0] == "證券代號":
+                continue
+            if i[0] == "":
+                break
             #print('證券代號->',i[0],'證券名稱=',i[1], '殖利率(%)=',i[2],'股利年度=',i[3], '本益比=',i[4],'股價淨值比=',i[5], '財報年/季=',i[6])
-            self.listCompany[i[0]] = {'id':i[0],'name':i[1]}
-        self.listCompany.pop('證券代號',0)
+            i[2] = 0.0 if i[2] == "" else float(i[2])
+            i[3] = 0.0 if i[3] == "" else float(i[3])
+            self.listCompany[i[0]] = {'id':i[0],'name':i[1],'d_yield':i[2],'PE':i[3]}
+        #self.listCompany.pop('證券代號',0)
 
 
     def getPrice(self):
@@ -95,7 +101,10 @@ class Spider:
         for i in data:
             #print('證券代號->',i[0],'證券名稱=',i[1], '成交股數=',i[2], '成交金額=',i[3],'開盤價=',i[4], '最高價=',i[5],'最低價=',i[6], '收盤價=',i[7], '漲跌價差=',i[8], '成交筆數=',i[9])
             if i[0] in self.listCompany:
+                i[7] = 0.0 if i[7] == "" else float(i[7])
                 self.listCompany[i[0]]['price']=i[7]
+            if i[0] == "":
+                break
         #print(self.listCompany)
         return self.listCompany
 
@@ -156,11 +165,13 @@ class Data:
             CREATE TABLE IF NOT EXISTS stock(
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
-                price TEXT,
+                d_yield REAL,
+                PE REAL,
+                price REAL,
                 time_to_market TEXT,
                 classification TEXT,
-                share_capital TEXT,
-                IHOLD TEXT,
+                share_capital INTEGER,
+                IHOLD REAL,
                 update_time INTEGER,
                 UNIQUE (name)
             );
@@ -174,21 +185,23 @@ class Data:
     def replaceStockData(self,conn, item):
         sql = '''
         INSERT or replace INTO 
-        stock(id,name,price,time_to_market,classification,share_capital,IHOLD,update_time)
-        VALUES( ?,?,?,?,?,?,?,?)
+        stock(id,name,d_yield,PE,price,time_to_market,classification,share_capital,IHOLD,update_time)
+        VALUES( ?,?,?,?,?,?,?,?,?,?)
         '''
 
         try:
             curser = conn.cursor()
             id = item['id']
             name = item['name']
+            d_yield = item['d_yield']
+            PE = item['PE']
             price = item['price']
             time_to_market = item['time_to_market']
             classification = item['classification']
             share_capital = item['share_capital']
             IHOLD = item['IHOLD']
             update_time = item['update_time']
-            curser.execute(sql, (id, name, price, time_to_market, classification, share_capital, IHOLD, update_time))
+            curser.execute(sql, (id, name, d_yield, PE, price, time_to_market, classification, share_capital, IHOLD, update_time))
         except  sqlite3Error as e:
             print(e)
         conn.commit()
@@ -228,16 +241,16 @@ class Data:
         for item in list(self.listInfo.values()):
             #print(item)
             conn = self.createConnection()
-            update_time = int("{:0<4}{:0<2}{:0<2}".format(time.gmtime().tm_year,time.gmtime().tm_mon,time.gmtime().tm_mday))
+            update_time = int("{:0>4}{:0>2}{:0>2}".format(time.gmtime().tm_year,time.gmtime().tm_mon,time.gmtime().tm_mday))
             with conn:
                 self.createStockTable(conn)
                 ctype = 99
                 stock = self.getStockData(conn, item['id'])
                 if self.checkCount(conn, item['id']) == 0:
                     ctype = 0
-                elif update_time - 7 > stock[7] or (time.gmtime().tm_mday % 5 == 0 and update_time != stock[7]):
+                elif update_time - 7 > stock[9] or (time.gmtime().tm_mday % 5 == 0 and update_time != stock[9]):
                     ctype = 0
-                elif update_time != stock[7]:
+                elif update_time != stock[9]:
                     ctype = 1
                 if ctype == 99:
                     return
@@ -245,14 +258,16 @@ class Data:
                     newInfo = Spider(item['id']).getProfile()
                     item['time_to_market'] = newInfo['上市時間'] or ""
                     item['classification'] = newInfo['產業類別'] or ""
-                    item['share_capital'] = newInfo['股本'] or ""
-                    item['IHOLD'] = newInfo['董監持股比例(%)'] or ""
+                    item['share_capital'] = newInfo['股本'] or "0"
+                    item['share_capital'] = int(item['share_capital'].replace(",", ""))
+                    item['IHOLD'] = newInfo['董監持股比例(%)'] or "0.0"
+                    item['IHOLD'] = float(item['IHOLD'])
                     time.sleep(1)
                 else:
-                    item['time_to_market'] = stock[3]
-                    item['classification'] = stock[4]
-                    item['share_capital'] = stock[5]
-                    item['IHOLD'] = stock[6]
+                    item['time_to_market'] = stock[5]
+                    item['classification'] = stock[6]
+                    item['share_capital'] = stock[7]
+                    item['IHOLD'] = stock[8]
                 item['update_time'] = update_time
                 self.replaceStockData(conn, item)
 
