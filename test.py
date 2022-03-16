@@ -1,6 +1,7 @@
 from models import Spider,Data
 import time
 
+print(-1 == -1.0)
 try:
     z=int("x")
     zz = int("2")
@@ -10,6 +11,7 @@ except:
 print(z,zz)
 
 x = Spider("2330")
+x.getDividendPayment() #取得已發放去年股利公司
 #x.getGrossMargin() #取得毛利率
 #x.getProfit() #取得利潤資料
 '''y,z = x.getProfit() #取得利潤資料

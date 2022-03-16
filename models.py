@@ -8,9 +8,9 @@ class Spider:
         self.id = id
         self.listProfile = dict()
         self.listDividend = dict()
-        self.listEps = dict()
         self.listProfit = dict()
         self.listCompany = dict()
+        self.listDividendPayment = list()
 
     def getProfile(self):
         r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/profile".format(self.id))
@@ -38,7 +38,7 @@ class Spider:
                 grossProfit = int(u3[i].text.replace(",", ""))
                 grossMargin = grossProfit / income
                 # print(quarter,income,gross_profit,gross_margin)
-                self.listProfit[quarter] = {"quarter": quarter, "income": income, "gross_profit": grossProfit, "gross_margin": grossMargin}
+                self.listProfit[quarter] = {"quarter": quarter, "income": income, "gross_profit": grossProfit, "gross_margin": grossMargin, "EPS": 0, "cash_dividends": -1.0, "stock_dividends": -1.0, "payment":0}
                 year = quarter[0:4:1]
                 if year in self.listDividend:
                     income += income
@@ -48,7 +48,7 @@ class Spider:
                     self.listDividend[year]["gross_profit"] = grossProfit
                     self.listDividend[year]["gross_margin"] = grossMargin
                 else:
-                    self.listDividend[year] = {"year": year, "income": income, "gross_profit": grossProfit, "gross_margin": grossMargin, "EPS": 0, "cash_dividends": 0.0, "stock_dividends": 0.0}
+                    self.listDividend[year] = {"year": year, "income": income, "gross_profit": grossProfit, "gross_margin": grossMargin, "EPS": 0, "cash_dividends": -1.0, "stock_dividends": -1.0, "payment":0}
             return True
         else:
             return None
@@ -65,13 +65,13 @@ class Spider:
                 if quarter in self.listProfit:
                     self.listProfit[quarter]["EPS"] = eps
                 else:
-                    self.listProfit[quarter] = {"quarter": quarter, "income": 0.0, "gross_profit": 0.0, "gross_margin": 0.0, "EPS": eps, "cash_dividends": 0.0, "stock_dividends": 0.0}
+                    self.listProfit[quarter] = {"quarter": quarter, "income": 0.0, "gross_profit": 0.0, "gross_margin": 0.0, "EPS": eps, "cash_dividends": 0.0, "stock_dividends": 0.0, "payment":0}
                 year = quarter[0:4:1]
                 if year in self.listDividend:
                     self.listDividend[year]["EPS"] += eps
                     #print(u1[i].text, eps)
                 else:
-                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "gross_margin": 0.0, "EPS": eps}
+                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "gross_margin": 0.0, "EPS": eps, "EPS": eps, "cash_dividends": -1.0, "stock_dividends": -1.0, "payment":0}
                     #print(u1[i].text, eps)
             #print(self.listDividend)
             #return self.listProfit
@@ -99,11 +99,15 @@ class Spider:
                 except:
                     stockDividends = 0.0
                 if year in self.listDividend:
+                    if self.listDividend[year]["cash_dividends"] == -1.0:
+                        self.listDividend[year]["cash_dividends"] == 0.0
+                    if self.listDividend[year]["stock_dividends"] == -1.0:
+                        self.listDividend[year]["stock_dividends"] == 0.0
                     self.listDividend[year]["cash_dividends"] += cashDividends
                     self.listDividend[year]["stock_dividends"] += stockDividends
                     #print(u1[i].text, float(u2[i].text), float(u3[i].text))
                 else:
-                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "gross_margin": 0.0, "EPS": 0.0, "cash_dividends": cashDividends, "stock_dividends": stockDividends}
+                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "gross_margin": 0.0, "EPS": 0.0, "cash_dividends": cashDividends, "stock_dividends": stockDividends, "payment":0}
                     #print(u1[i].text, float(u2[i].text), float(u3[i].text))
             #print(self.listDividend)
             #return self.listDividend
@@ -111,8 +115,27 @@ class Spider:
         else:
             return None
 
+    def getDividendPayment(self):
+        url = 'https://mopsfin.twse.com.tw/opendata/t187ap45_L.csv'
+        webpage = urllib.request.urlopen(url)
+        data = csv.reader(webpage.read().decode('utf-8').splitlines())
+        for i in data:
+            if "出表日期" in i[0]:
+                continue
+            if i[0] == "":
+                break
+            self.listDividendPayment.append(i[1])
+        print(self.listDividendPayment)
+
     def getProfit(self):
         if self.getGrossMargin() is not None and self.getEps() is not None and self.gerDividend() is not None:
+            for item in list(self.listDividend.values()):
+                year = int(item['year'])
+                localeTime = time.gmtime().tm_year
+                if year == localeTime or (item['year'] == localeTime - 1 and self.id not in self.listDividendPayment):
+                    self.listDividend[str(year)]['payment'] = 0
+                else:
+                    self.listDividend[str(year)]['payment'] = 1
             return self.listDividend, self.listProfit
         else:
             return None
@@ -122,7 +145,7 @@ class Spider:
         webpage = urllib.request.urlopen(url)
         data = csv.reader(webpage.read().decode('utf-8').splitlines())
         for i in data:
-            if i[0] == "證券代號":
+            if "證券代號" in i[0]:
                 continue
             if i[0] == "":
                 break
@@ -155,6 +178,7 @@ class Spider:
 class Data:
     def __init__(self):
         self.listInfo = Spider().getPrice()
+        self.listStockId = list()
         self.dbFile = 'yield.db'
         # print(self.listInfo)
 
@@ -215,7 +239,8 @@ class Data:
                 gross_margin REAL,
                 EPS REAL,
                 cash_dividends REAL,
-                stock_dividends REAL
+                stock_dividends REAL,
+                payment INTEGER
             );
             '''.format(id)
         cursor = conn.cursor()
@@ -227,8 +252,8 @@ class Data:
     def replaceDividendData(self, conn, id, dataList):
         sql = '''
         INSERT or replace INTO 
-        dividend_{}(year,income,gross_profit,gross_margin,EPS,cash_dividends,stock_dividends)
-        VALUES( ?,?,?,?,?,?,?)
+        dividend_{}(year,income,gross_profit,gross_margin,EPS,cash_dividends,stock_dividends,payment)
+        VALUES( ?,?,?,?,?,?,?,?)
         '''.format(id)
 
         try:
@@ -242,7 +267,8 @@ class Data:
                 EPS = item['EPS']
                 cash_dividends = item['cash_dividends']
                 stock_dividends = item['stock_dividends']
-                curser.execute(sql, (year, income, gross_profit, gross_margin, EPS, cash_dividends, stock_dividends))
+                payment = item['payment']
+                curser.execute(sql, (year, income, gross_profit, gross_margin, EPS, cash_dividends, stock_dividends, payment))
         except  sqlite3Error as e:
             print(e)
         conn.commit()
@@ -366,7 +392,14 @@ class Data:
                     item['share_capital'] = stock[7]
                     item['IHOLD'] = stock[8]
                 item['update_time'] = update_time
+                self.listStockId.append(item['id'])
                 self.replaceStockData(conn, item)
+
+    def createDatabase(self):
+        self.updateCompanyInfo()
+        for item in self.listStockId:
+            self.updateProfitAndDividendInfo(item)
+
 
 
 """
