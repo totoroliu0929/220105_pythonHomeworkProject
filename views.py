@@ -14,14 +14,14 @@ class Window(tk.Tk):
         #上方的Frame=========end
         self.mainLabelFrame = MainLabelFrame(self,text="左邊的")
         self.mainLabelFrame.grid(column=0,row=1,padx=20,pady=20)
-        self.updateData()
+        self.updateStockData()
 
-    def updateData(self):
+    def updateStockData(self):
         now = datetime.now()
         nowString = now.strftime("%Y-%m-%d %H:%M:%S")
-        self.mainLabelFrame.updateScreen()
+        self.mainLabelFrame.updateStockScreen()
         self.mainLabelFrame.configure(text=nowString)
-        self.after(60 * 1000, self.updateData)
+        self.after(60 * 1000, self.updateStockData)
 
 
 class MainLabelFrame(tk.LabelFrame):
@@ -32,37 +32,41 @@ class MainLabelFrame(tk.LabelFrame):
         #normal_count = dataSource.get_count_of_normal()
         tk.Label(topFrame, text=f"數量:",background='gray',fg='#ffffff', font=("arial",20)).pack(padx=10,pady=10)
         #topFrame.pack(pady=20)
-        treeView = ttk.Treeview(self,columns=('id','name','d_yield','price','10y_EPS','10y_yield','10y_yield2','judge'),show="headings")
-        self.treeView = treeView
-        treeView.heading('id',text='股號')
-        treeView.heading('name', text='股名')
-        treeView.heading('d_yield', text='現金殖利率')
-        treeView.heading('price', text='最近收盤價')
-        treeView.heading('10y_EPS', text='十年平均每股盈餘')
-        treeView.heading('10y_yield', text='十年平均現金殖利率')
-        treeView.heading('10y_yield2', text='十年平均股票股利')
-        treeView.heading('judge', text='價位')
+        treeViewStock = ttk.Treeview(self,columns=('id','name','d_yield','price','10y_EPS','10y_yield','10y_yield2','judge'),show="headings")
+        self.treeViewStock = treeViewStock
+        self.createTreeViewStock()
 
-        treeView.column('id',width=100)
-        treeView.column('name',width=100)
-        treeView.column('d_yield',width=100)
-        treeView.column('price', width=100)
-        treeView.column('10y_EPS', width=100)
-        treeView.column('10y_yield', width=100)
-        treeView.column('10y_yield2', width=100)
-        treeView.column('judge', width=100)
-        treeView.pack()
+    def createTreeViewStock(self):
+        treeViewStock = self.treeViewStock
+        treeViewStock.heading('id',text='股號')
+        treeViewStock.heading('name', text='股名')
+        treeViewStock.heading('d_yield', text='現金殖利率')
+        treeViewStock.heading('price', text='最近收盤價')
+        treeViewStock.heading('10y_EPS', text='十年平均每股盈餘')
+        treeViewStock.heading('10y_yield', text='十年平均現金殖利率')
+        treeViewStock.heading('10y_yield2', text='十年平均股票股利')
+        treeViewStock.heading('judge', text='價位')
+
+        treeViewStock.column('id',width=100)
+        treeViewStock.column('name',width=100)
+        treeViewStock.column('d_yield',width=100)
+        treeViewStock.column('price', width=100)
+        treeViewStock.column('10y_EPS', width=100)
+        treeViewStock.column('10y_yield', width=100)
+        treeViewStock.column('10y_yield2', width=100)
+        treeViewStock.column('judge', width=100)
+        treeViewStock.pack()
 
     def checkStock(self,event):
-        for item in self.treeView.selection():
-            item_text = self.treeView.item(item, "values")
+        for item in self.treeViewStock.selection():
+            item_text = self.treeViewStock.item(item, "values")
             print(item_text[0])
-        self.treeView.pack_forget()
+        self.treeViewStock.pack_forget()
         return
 
-    def updateScreen(self):
-        for i in self.treeView.get_children():
-            self.treeView.delete(i)
+    def updateStockScreen(self):
+        for i in self.treeViewStock.get_children():
+            self.treeViewStock.delete(i)
         response = GetData().getListStock()
         for item in response:
             item = list(item)
@@ -90,8 +94,8 @@ class MainLabelFrame(tk.LabelFrame):
             elif item[2] >= 5:
                 y = "合理"
             item.append(y)
-            self.treeView.insert('', 'end', values=item)
-            self.treeView.bind("<ButtonRelease-1>",self.checkStock)
+            self.treeViewStock.insert('', 'end', values=item)
+            self.treeViewStock.bind("<ButtonRelease-1>", self.checkStock)
 
 
 if __name__=="__main__":
