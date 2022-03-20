@@ -1,7 +1,9 @@
-from models import Spider,Data
+from models import Spider, UpdateData, GetData
 import time
 
-print(-1 == -1.0)
+print(GetData().dbFile)
+#print(GetData().getListStock())
+
 try:
     z=int("x")
     zz = int("2")
@@ -25,7 +27,7 @@ for item in list(y.values()):
 #Spider().getCompany()
 #Data().updateCompanyInfo() #抓取所有上市公司的資料，會執行很久
 
-Data().updateProfitAndDividendInfo("2330") #抓取個股營業利潤資料
+#UpdateData().updateProfitAndDividendInfo("2330") #抓取個股營業利潤資料
 
 '''
 conn = Data().createConnection()

@@ -12,8 +12,18 @@ class Spider:
         self.listCompany = dict()
         self.listDividendPayment = list()
 
+    def headersUpdate(self):
+        headers = requests.utils.default_headers()
+
+        headers.update(
+            {
+                'User-Agent': 'My User Agent 1.0',
+            }
+        )
+        return headers
+
     def getProfile(self):
-        r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/profile".format(self.id))
+        r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/profile".format(self.id), headers=self.headersUpdate())
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             u1 = soup.select("#main-2-QuoteProfile-Proxy section:nth-of-type(1) span>span")
@@ -26,7 +36,7 @@ class Spider:
             return None
 
     def getGrossMargin(self):
-        r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/income-statement".format(self.id))
+        r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/income-statement".format(self.id), headers=self.headersUpdate())
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             u1 = soup.select("#qsp-income-statement-table .table-header-wrapper > div")
@@ -54,7 +64,7 @@ class Spider:
             return None
 
     def getEps(self):
-        r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/eps".format(self.id))
+        r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/eps".format(self.id), headers=self.headersUpdate())
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             u1 = soup.select("#qsp-eps-table li.List\(n\)>div>div:nth-of-type(1)")
@@ -80,7 +90,7 @@ class Spider:
             return None
 
     def gerDividend(self):
-        r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/dividend".format(self.id))
+        r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/dividend".format(self.id), headers=self.headersUpdate())
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             u1 = soup.select("#main-2-QuoteDividend-Proxy .table-body-wrapper li div.Ta\(start\)")
@@ -175,7 +185,7 @@ class Spider:
 
 
 
-class Data:
+class UpdateData:
     def __init__(self):
         self.listInfo = Spider().getPrice()
         self.listStockId = list()
@@ -192,16 +202,17 @@ class Data:
             return
         return conn
 
-    def createProfitTable(self, conn, id):
+    def createProfitTable(self, conn):
         sql = '''
-            CREATE TABLE IF NOT EXISTS profit_{}(
-                quarter TEXT PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS profit(
+                stock_id TEXT,
+                quarter TEXT,
                 income INTEGER,
                 gross_profit INTEGER,
                 gross_margin REAL,
                 EPS REAL
             );
-            '''.format(id)
+            '''
 
         cursor = conn.cursor()
         try:
@@ -212,27 +223,29 @@ class Data:
     def replaceProfitData(self, conn, id, dataList):
         sql = '''
         INSERT or replace INTO 
-        profit_{}(quarter,income,gross_profit,gross_margin,EPS)
-        VALUES( ?,?,?,?,?)
+        profit(stock_id,quarter,income,gross_profit,gross_margin,EPS)
+        VALUES( ?,?,?,?,?,?)
         '''.format(id)
 
         try:
             curser = conn.cursor()
             for item in dataList.values():
                 print(item)
+                stock_id = id
                 quarter = item['quarter']
                 income = item['income']
                 gross_profit = item['gross_profit']
                 gross_margin = item['gross_margin']
                 EPS = item['EPS']
-                curser.execute(sql, (quarter, income, gross_profit, gross_margin, EPS))
+                curser.execute(sql, (stock_id, quarter, income, gross_profit, gross_margin, EPS))
         except  sqlite3Error as e:
             print(e)
         conn.commit()
 
-    def createDividendTable(self, conn, id):
+    def createDividendTable(self, conn):
         sql = '''
-            CREATE TABLE IF NOT EXISTS dividend_{}(
+            CREATE TABLE IF NOT EXISTS dividend(
+                stock_id TEXT,
                 year TEXT PRIMARY KEY,
                 income INTEGER,
                 gross_profit INTEGER,
@@ -242,7 +255,7 @@ class Data:
                 stock_dividends REAL,
                 payment INTEGER
             );
-            '''.format(id)
+            '''
         cursor = conn.cursor()
         try:
             cursor.execute(sql)
@@ -252,14 +265,15 @@ class Data:
     def replaceDividendData(self, conn, id, dataList):
         sql = '''
         INSERT or replace INTO 
-        dividend_{}(year,income,gross_profit,gross_margin,EPS,cash_dividends,stock_dividends,payment)
-        VALUES( ?,?,?,?,?,?,?,?)
+        dividend(stock_id,year,income,gross_profit,gross_margin,EPS,cash_dividends,stock_dividends,payment)
+        VALUES( ?,?,?,?,?,?,?,?,?)
         '''.format(id)
 
         try:
             curser = conn.cursor()
             for item in dataList.values():
                 print(item)
+                stock_id = id
                 year = item['year']
                 income = item['income']
                 gross_profit = item['gross_profit']
@@ -268,7 +282,7 @@ class Data:
                 cash_dividends = item['cash_dividends']
                 stock_dividends = item['stock_dividends']
                 payment = item['payment']
-                curser.execute(sql, (year, income, gross_profit, gross_margin, EPS, cash_dividends, stock_dividends, payment))
+                curser.execute(sql, (stock_id,year, income, gross_profit, gross_margin, EPS, cash_dividends, stock_dividends, payment))
         except  sqlite3Error as e:
             print(e)
         conn.commit()
@@ -277,9 +291,9 @@ class Data:
         dividend, profit = Spider(id).getProfit()
         conn = self.createConnection()
         with conn:
-            self.createProfitTable(conn, id)
+            self.createProfitTable(conn)
             self.replaceProfitData(conn, id, profit)
-            self.createDividendTable(conn, id)
+            self.createDividendTable(conn)
             self.replaceDividendData(conn, id, dividend)
 
     def createStockTable(self, conn):
@@ -399,6 +413,47 @@ class Data:
         self.updateCompanyInfo()
         for item in self.listStockId:
             self.updateProfitAndDividendInfo(item)
+
+class GetData(UpdateData):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def getListStock(self):
+        conn = self.createConnection()
+        sql = '''
+            SELECT id,name,d_yield,price
+            FROM stock
+            WHERE d_yield >= 5  
+            '''
+        rows = list()
+        with conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql)
+                rows = cursor.fetchall()
+                print(rows)
+            except sqlite3Error as e:
+                print(e)
+        return rows
+
+    def getSumInfo(self,id):
+        conn = self.createConnection()
+        sql = '''
+            SELECT EPS,cash_dividends,stock_dividends
+            FROM dividend
+            WHERE payment = 1 AND stock_id = '{}'
+            limit 0, 10
+            '''.format(id)
+        rows = list()
+        with conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql)
+                rows = cursor.fetchall()
+                print(rows)
+            except sqlite3Error as e:
+                print(e)
+        return rows
 
 
 
