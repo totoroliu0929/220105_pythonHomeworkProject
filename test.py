@@ -1,6 +1,8 @@
 from models import Spider, UpdateData, GetData
 import time
+from decimal import Decimal
 
+print(Decimal("0.02"))
 print(GetData().dbFile)
 #print(GetData().getListStock())
 
@@ -27,7 +29,7 @@ for item in list(y.values()):
 #Spider().getCompany()
 #Data().updateCompanyInfo() #抓取所有上市公司的資料，會執行很久
 
-#UpdateData().updateProfitAndDividendInfo("2330") #抓取個股營業利潤資料
+UpdateData().updateProfitAndDividendInfo("2330") #抓取個股營業利潤資料
 
 '''
 conn = Data().createConnection()

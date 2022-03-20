@@ -1,6 +1,7 @@
 from models import GetData
 import tkinter as tk
 from tkinter import ttk
+from decimal import Decimal
 #from datetime import datetime
 
 class Window(tk.Tk):
@@ -30,20 +31,37 @@ class MainLabelFrame(tk.LabelFrame):
         treeView.heading('name', text='股名')
         treeView.heading('d_yield', text='現金殖利率')
         treeView.heading('price', text='最近收盤價')
-        treeView.heading('10y_yield', text='十年現金殖利率')
         treeView.heading('10y_EPS', text='十年每股盈餘')
+        treeView.heading('10y_yield', text='十年現金殖利率')
 
-        treeView.column('id',width=50)
-        treeView.column('name',width=50)
-        treeView.column('d_yield',width=50)
-        treeView.column('price', width=50)
-        treeView.column('10y_yield', width=50)
-        treeView.column('10y_EPS',width=50)
+        treeView.column('id',width=100)
+        treeView.column('name',width=100)
+        treeView.column('d_yield',width=100)
+        treeView.column('price', width=100)
+        treeView.column('10y_EPS', width=100)
+        treeView.column('10y_yield', width=100)
         treeView.pack()
 
         response = GetData().getListStock()
         for item in response:
+            item = list(item)
             print("yyyy",item[0])
+            r = GetData().getSumInfo(item[0])
+            x = [0,0,0]
+            for i in r:
+                print(i)
+                print("VVVVV",x[0],x[1],x[2])
+                x[0] = float(Decimal(x[0]) +Decimal(i[0]))
+                x[1] = float(Decimal(x[1]) +Decimal(i[1]))
+                x[2] = float(Decimal(x[2]) +Decimal(i[2]))
+
+            x[0] = x[0] / 10
+            x[1] = x[1] / 10
+            x[2] = x[2] / 10
+            item.append(x[0])
+            item.append(x[1])
+            item.append(x[2])
+            treeView.insert('', 'end', values=item)
 
 
 if __name__=="__main__":

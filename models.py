@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.request, csv, sqlite3, time
 from sqlite3 import Error as sqlite3Error
+from decimal import Decimal
 
 class Spider:
     def __init__(self, id: str = None):
@@ -20,6 +21,8 @@ class Spider:
                 'User-Agent': 'My User Agent 1.0',
             }
         )
+        headers.update = {
+            'user-agent': 'Mozilla/5.0 (Macintosh Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.181 Safari/537.36'}
         return headers
 
     def getProfile(self):
@@ -48,7 +51,7 @@ class Spider:
                 grossProfit = int(u3[i].text.replace(",", ""))
                 grossMargin = grossProfit / income
                 # print(quarter,income,gross_profit,gross_margin)
-                self.listProfit[quarter] = {"quarter": quarter, "income": income, "gross_profit": grossProfit, "gross_margin": grossMargin, "EPS": 0, "cash_dividends": -1.0, "stock_dividends": -1.0, "payment":0}
+                self.listProfit[quarter] = {"quarter": quarter, "income": income, "gross_profit": grossProfit, "gross_margin": grossMargin, "EPS": 0}
                 year = quarter[0:4:1]
                 if year in self.listDividend:
                     income += income
@@ -73,15 +76,16 @@ class Spider:
                 quarter = u1[i].text.replace(" ", "")
                 eps = float(u2[i].text)
                 if quarter in self.listProfit:
-                    self.listProfit[quarter]["EPS"] = eps
+                    self.listProfit[quarter]["EPS"] = float(Decimal(self.listProfit[quarter]["EPS"]) + Decimal(eps))
+                    print("zzzzzzzzzzzzz",self.listProfit[quarter]["EPS"], eps)
                 else:
-                    self.listProfit[quarter] = {"quarter": quarter, "income": 0.0, "gross_profit": 0.0, "gross_margin": 0.0, "EPS": eps, "cash_dividends": 0.0, "stock_dividends": 0.0, "payment":0}
+                    self.listProfit[quarter] = {"quarter": quarter, "income": 0.0, "gross_profit": 0.0, "gross_margin": 0.0, "EPS": eps}
                 year = quarter[0:4:1]
                 if year in self.listDividend:
-                    self.listDividend[year]["EPS"] += eps
+                    self.listDividend[year]["EPS"] = float(Decimal(self.listDividend[year]["EPS"]) + Decimal(eps))
                     #print(u1[i].text, eps)
                 else:
-                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "gross_margin": 0.0, "EPS": eps, "EPS": eps, "cash_dividends": -1.0, "stock_dividends": -1.0, "payment":0}
+                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "gross_margin": 0.0, "EPS": eps, "cash_dividends": -1.0, "stock_dividends": -1.0, "payment":0}
                     #print(u1[i].text, eps)
             #print(self.listDividend)
             #return self.listProfit
@@ -110,11 +114,11 @@ class Spider:
                     stockDividends = 0.0
                 if year in self.listDividend:
                     if self.listDividend[year]["cash_dividends"] == -1.0:
-                        self.listDividend[year]["cash_dividends"] == 0.0
+                        self.listDividend[year]["cash_dividends"] = 0.0
                     if self.listDividend[year]["stock_dividends"] == -1.0:
-                        self.listDividend[year]["stock_dividends"] == 0.0
-                    self.listDividend[year]["cash_dividends"] += cashDividends
-                    self.listDividend[year]["stock_dividends"] += stockDividends
+                        self.listDividend[year]["stock_dividends"] = 0.0
+                    self.listDividend[year]["cash_dividends"] = float(Decimal(self.listDividend[year]["cash_dividends"]) + Decimal(cashDividends))
+                    self.listDividend[year]["stock_dividends"] = float(Decimal(self.listDividend[year]["stock_dividends"]) + Decimal(stockDividends))
                     #print(u1[i].text, float(u2[i].text), float(u3[i].text))
                 else:
                     self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "gross_margin": 0.0, "EPS": 0.0, "cash_dividends": cashDividends, "stock_dividends": stockDividends, "payment":0}
@@ -415,15 +419,27 @@ class UpdateData:
             self.updateProfitAndDividendInfo(item)
 
 class GetData(UpdateData):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        self.dbFile = 'yield.db'
+
+        # print(self.listInfo)
+
+        def createConnection(self):
+            conn = None
+            try:
+                conn = sqlite3.connect(self.dbFile)
+            except sqlite3Error as e:
+                print("sqlite連線錯誤")
+                print(e)
+                return
+            return conn
 
     def getListStock(self):
         conn = self.createConnection()
         sql = '''
             SELECT id,name,d_yield,price
             FROM stock
-            WHERE d_yield >= 5  
+            WHERE d_yield >= 1 AND id = '2330'
             '''
         rows = list()
         with conn:
