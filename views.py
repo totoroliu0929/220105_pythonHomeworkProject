@@ -57,6 +57,27 @@ class MainLabelFrame(tk.LabelFrame):
         treeViewStock.column('judge', width=100)
         treeViewStock.pack()
 
+    def createTreeViewStock(self):
+        treeViewStock = self.treeViewStock
+        treeViewStock.heading('id',text='股號')
+        treeViewStock.heading('name', text='股名')
+        treeViewStock.heading('d_yield', text='現金殖利率')
+        treeViewStock.heading('price', text='最近收盤價')
+        treeViewStock.heading('10y_EPS', text='十年平均每股盈餘')
+        treeViewStock.heading('10y_yield', text='十年平均現金殖利率')
+        treeViewStock.heading('10y_yield2', text='十年平均股票股利')
+        treeViewStock.heading('judge', text='價位')
+
+        treeViewStock.column('id',width=100)
+        treeViewStock.column('name',width=100)
+        treeViewStock.column('d_yield',width=100)
+        treeViewStock.column('price', width=100)
+        treeViewStock.column('10y_EPS', width=100)
+        treeViewStock.column('10y_yield', width=100)
+        treeViewStock.column('10y_yield2', width=100)
+        treeViewStock.column('judge', width=100)
+        treeViewStock.pack()
+
     def checkStock(self,event):
         for item in self.treeViewStock.selection():
             item_text = self.treeViewStock.item(item, "values")

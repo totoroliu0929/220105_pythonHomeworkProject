@@ -74,7 +74,7 @@ class Spider:
                 grossProfit = int(u3[i].text.replace(",", ""))
                 grossMargin = grossProfit / income
                 # print(quarter,income,gross_profit,gross_margin)
-                self.listProfit[quarter] = {"quarter": quarter, "income": income, "gross_profit": grossProfit, "gross_margin": grossMargin, "EPS": 0}
+                self.listProfit[quarter] = {"quarter": quarter, "income": income, "gross_profit": grossProfit, "EPS": 0}
                 year = quarter[0:4:1]
                 if year in self.listDividend:
                     income += income
@@ -82,9 +82,9 @@ class Spider:
                     grossMargin = grossProfit / income
                     self.listDividend[year]["income"] = income
                     self.listDividend[year]["gross_profit"] = grossProfit
-                    self.listDividend[year]["gross_margin"] = grossMargin
+                    #self.listDividend[year]["gross_margin"] = grossMargin
                 else:
-                    self.listDividend[year] = {"year": year, "income": income, "gross_profit": grossProfit, "gross_margin": grossMargin, "EPS": 0, "cash_dividends": -1.0, "stock_dividends": -1.0, "payment":0}
+                    self.listDividend[year] = {"year": year, "income": income, "gross_profit": grossProfit, "EPS": 0, "cash_dividends": -1.0, "stock_dividends": -1.0, "payment":0}
             return True
         else:
             return None
@@ -102,13 +102,13 @@ class Spider:
                     self.listProfit[quarter]["EPS"] = float(Decimal(self.listProfit[quarter]["EPS"]) + Decimal(eps))
                     print("zzzzzzzzzzzzz",self.listProfit[quarter]["EPS"], eps)
                 else:
-                    self.listProfit[quarter] = {"quarter": quarter, "income": 0.0, "gross_profit": 0.0, "gross_margin": 0.0, "EPS": eps}
+                    self.listProfit[quarter] = {"quarter": quarter, "income": 0.0, "gross_profit": 0.0, "EPS": eps}
                 year = quarter[0:4:1]
                 if year in self.listDividend:
                     self.listDividend[year]["EPS"] = float(Decimal(self.listDividend[year]["EPS"]) + Decimal(eps))
                     #print(u1[i].text, eps)
                 else:
-                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "gross_margin": 0.0, "EPS": eps, "cash_dividends": -1.0, "stock_dividends": -1.0, "payment":0}
+                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "EPS": eps, "cash_dividends": -1.0, "stock_dividends": -1.0, "payment":0}
                     #print(u1[i].text, eps)
             #print(self.listDividend)
             #return self.listProfit
@@ -144,7 +144,7 @@ class Spider:
                     self.listDividend[year]["stock_dividends"] = float(Decimal(self.listDividend[year]["stock_dividends"]) + Decimal(stockDividends))
                     #print(u1[i].text, float(u2[i].text), float(u3[i].text))
                 else:
-                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "gross_margin": 0.0, "EPS": 0.0, "cash_dividends": cashDividends, "stock_dividends": stockDividends, "payment":0}
+                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "EPS": 0.0, "cash_dividends": cashDividends, "stock_dividends": stockDividends, "payment":0}
                     #print(u1[i].text, float(u2[i].text), float(u3[i].text))
             #print(self.listDividend)
             #return self.listDividend
@@ -236,7 +236,6 @@ class UpdateData:
                 quarter TEXT,
                 income INTEGER,
                 gross_profit INTEGER,
-                gross_margin REAL,
                 EPS REAL
             );
             '''
@@ -250,8 +249,8 @@ class UpdateData:
     def replaceProfitData(self, conn, id, dataList):
         sql = '''
         INSERT or replace INTO 
-        profit(stock_id,quarter,income,gross_profit,gross_margin,EPS)
-        VALUES( ?,?,?,?,?,?)
+        profit(stock_id,quarter,income,gross_profit,EPS)
+        VALUES( ?,?,?,?,?)
         '''.format(id)
 
         try:
@@ -262,9 +261,8 @@ class UpdateData:
                 quarter = item['quarter']
                 income = item['income']
                 gross_profit = item['gross_profit']
-                gross_margin = item['gross_margin']
                 EPS = item['EPS']
-                curser.execute(sql, (stock_id, quarter, income, gross_profit, gross_margin, EPS))
+                curser.execute(sql, (stock_id, quarter, income, gross_profit, EPS))
         except  sqlite3Error as e:
             print(e)
         conn.commit()
@@ -276,7 +274,6 @@ class UpdateData:
                 year TEXT PRIMARY KEY,
                 income INTEGER,
                 gross_profit INTEGER,
-                gross_margin REAL,
                 EPS REAL,
                 cash_dividends REAL,
                 stock_dividends REAL,
@@ -292,8 +289,8 @@ class UpdateData:
     def replaceDividendData(self, conn, id, dataList):
         sql = '''
         INSERT or replace INTO 
-        dividend(stock_id,year,income,gross_profit,gross_margin,EPS,cash_dividends,stock_dividends,payment)
-        VALUES( ?,?,?,?,?,?,?,?,?)
+        dividend(stock_id,year,income,gross_profit,EPS,cash_dividends,stock_dividends,payment)
+        VALUES( ?,?,?,?,?,?,?,?)
         '''.format(id)
 
         try:
@@ -304,12 +301,11 @@ class UpdateData:
                 year = item['year']
                 income = item['income']
                 gross_profit = item['gross_profit']
-                gross_margin = item['gross_margin']
                 EPS = item['EPS']
                 cash_dividends = item['cash_dividends']
                 stock_dividends = item['stock_dividends']
                 payment = item['payment']
-                curser.execute(sql, (stock_id,year, income, gross_profit, gross_margin, EPS, cash_dividends, stock_dividends, payment))
+                curser.execute(sql, (stock_id,year, income, gross_profit, EPS, cash_dividends, stock_dividends, payment))
         except  sqlite3Error as e:
             print(e)
         conn.commit()
