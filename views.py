@@ -42,7 +42,8 @@ class MainLabelFrame(tk.LabelFrame):
         topFrame.pack()
         box = tk.Label(topFrame, text=f"現在股價：{Spider(id).getPriceNow()}")
         box.grid(column=0, row=0,padx=10, pady=10)
-        tk.Label(topFrame, text=f"現在股價：{Spider(id).getPriceNow()}").grid(column=1, row=0,padx=10, pady=10)
+        tk.Label(topFrame, text=f"現在股價：{Spider(id).getPriceNow()}").grid(column=0, row=1,padx=10, pady=10)
+        tk.Button(topFrame, text=f"現在股價：{Spider(id).getPriceNow()}").grid(column=1, row=0,padx=10, pady=10)
         #self.infoLabelFrame = InfoLabelFrame(topFrame, text="左邊的")
         #self.infoLabelFrame.pack(column=0, row=1, padx=20, pady=20)
 
