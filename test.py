@@ -2,7 +2,7 @@ from models import Spider, UpdateData, GetData
 import time
 from decimal import Decimal
 
-print(Decimal("0.02"))
+print(Spider(2330).getPriceNow())
 print(GetData().dbFile)
 #print(GetData().getListStock())
 

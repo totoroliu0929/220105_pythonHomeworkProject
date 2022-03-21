@@ -4,6 +4,8 @@ import urllib.request, csv, sqlite3, time
 from sqlite3 import Error as sqlite3Error
 from decimal import Decimal
 
+__all__ = ['Spider().getPriceNow()','GetData().getListDividend()','GetData().getListStock()','GetData().getSumInfo()']
+
 class Spider:
     def __init__(self, id: str = None):
         self.id = id
@@ -47,6 +49,15 @@ class Spider:
         random_agent = USER_AGENTS[randint(0, len(USER_AGENTS) - 1)]
         headers = {'User-Agent': random_agent, }
         return headers
+
+    def getPriceNow(self):
+        r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW".format(self.id), headers=self.headersUpdate())
+        if r.status_code == 200:
+            soup = BeautifulSoup(r.text, "html.parser")
+            u1 = soup.select("#main-0-QuoteHeader-Proxy .Mend\(16px\)")
+            return u1[0].text
+        else:
+            return None
 
     def getProfile(self):
         r = requests.get("https://tw.stock.yahoo.com/quote/{}.TW/profile".format(self.id), headers=self.headersUpdate())
@@ -100,7 +111,7 @@ class Spider:
                 eps = float(u2[i].text)
                 if quarter in self.listProfit:
                     self.listProfit[quarter]["EPS"] = float(Decimal(self.listProfit[quarter]["EPS"]) + Decimal(eps))
-                    print("zzzzzzzzzzzzz",self.listProfit[quarter]["EPS"], eps)
+                    #print("zzzzzzzzzzzzz",self.listProfit[quarter]["EPS"], eps)
                 else:
                     self.listProfit[quarter] = {"quarter": quarter, "income": 0.0, "gross_profit": 0.0, "EPS": eps}
                 year = quarter[0:4:1]
@@ -456,7 +467,7 @@ class GetData(UpdateData):
     def getListStock(self):
         conn = self.createConnection()
         sql = '''
-            SELECT id,name,d_yield,price
+            SELECT id,name,classification,d_yield,price
             FROM stock
             WHERE d_yield >= 10 OR id = "2330"
             '''
@@ -477,7 +488,7 @@ class GetData(UpdateData):
             SELECT EPS,cash_dividends,stock_dividends
             FROM dividend
             WHERE payment = 1 AND stock_id = '{}'
-            limit 0, 10
+            limit 0, 5
             '''.format(id)
         rows = list()
         with conn:
@@ -486,6 +497,24 @@ class GetData(UpdateData):
                 cursor.execute(sql)
                 rows = cursor.fetchall()
                 #print(rows)
+            except sqlite3Error as e:
+                print(e)
+        return rows
+
+    def getListDividend(self,id):
+        conn = self.createConnection()
+        sql = '''
+            SELECT year,income,gross_profit,EPS,cash_dividends,stock_dividends
+            FROM dividend
+            WHERE payment = 1 AND stock_id = '{}'
+            '''.format(id)
+        rows = list()
+        with conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql)
+                rows = cursor.fetchall()
+                # print(rows)
             except sqlite3Error as e:
                 print(e)
         return rows
