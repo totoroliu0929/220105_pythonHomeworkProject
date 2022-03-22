@@ -1,7 +1,7 @@
 from models import Spider, UpdateData, GetData
 import time
 from decimal import Decimal
-
+print(time.gmtime().tm_year - 1)
 print(Spider(2330).getPriceNow())
 print(GetData().dbFile)
 #print(GetData().getListStock())

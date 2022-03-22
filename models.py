@@ -173,7 +173,7 @@ class Spider:
             if i[0] == "":
                 break
             self.listDividendPayment.append(i[1])
-        print(self.listDividendPayment)
+        return self.listDividendPayment
 
     def getProfit(self):
         if self.getGrossMargin() is not None and self.getEps() is not None and self.gerDividend() is not None:
