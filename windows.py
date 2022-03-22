@@ -85,7 +85,7 @@ class MainLabelFrame(tk.LabelFrame):
                 return
             priceNow = float(Spider(id).getPriceNow())
             boxPrice.configure(text=f"{Spider(id).getPriceNow()}")
-            boxYield.configure(text="{}%".format(round(yieldNow/priceNow*1000)/100))
+            boxYield.configure(text="{}%".format(round(yieldNow/priceNow*10000)/100))
             # self.box.pack(padx=10, pady=10)
             self.after(60 * 1000, updatePriceNow)
         def backScotkList():
@@ -109,7 +109,7 @@ class MainLabelFrame(tk.LabelFrame):
         topFrame.pack()
         print(yieldNow)
         boxPrice = tk.Label(topFrame, text=f"{priceNow}", anchor="w",width=15)
-        boxYield = tk.Label(topFrame, text="{}%".format(round(yieldNow/priceNow*1000)/100), anchor="w",width=15)
+        boxYield = tk.Label(topFrame, text="{}%".format(round(yieldNow/priceNow*10000)/100), anchor="w",width=15)
         tk.Label(topFrame, text=f"股號：", anchor="e",width=15).grid(column=0, row=0, pady=5)
         tk.Label(topFrame, text=f"{listStockInfo[0]}", anchor="w",width=15).grid(column=1, row=0, pady=5)
         tk.Label(topFrame, text=f"上市公司：", anchor="e",width=15).grid(column=2, row=0, pady=5)
