@@ -13,10 +13,10 @@ class Window(tk.Tk):
         #上方的Frame=========start
         topFrame = tk.Frame(self,background='red')
         tk.Label(topFrame,text="存股輔助系統",font=("arial",20)).pack()
-        topFrame.grid(column=0,row=0,columnspan=3,padx=20,pady=20)
+        topFrame.pack()
         #上方的Frame=========end
         self.mainLabelFrame = MainLabelFrame(self,text="左邊的")
-        self.mainLabelFrame.grid(column=0,row=1,padx=20,pady=20)
+        self.mainLabelFrame.pack()
         self.updateStockData()
 
     def updateStockData(self):
@@ -67,9 +67,9 @@ class MainLabelFrame(tk.LabelFrame):
         message = tk.Label(topFrame, text="可利用以下欄位進行搜尋", anchor="center",width=36).grid(column=2, row=0, columnspan=2, pady=5)
         input = tk.Entry(topFrame, width=36, textvariable=value)
         input.grid(column=2, row=1, columnspan=2, pady=5)
-        tk.Button(topFrame, text=f"搜尋股號", command=searchId, width=36, bd=0, fg="white", bg="black",height=2).grid(column=0, row=2, columnspan=2, pady=5)
-        tk.Button(topFrame, text=f"搜尋股名", command=searchName, width=36, bd=0, fg="white", bg="black",height=2).grid(column=2, row=2, columnspan=2, pady=5)
-        tk.Button(topFrame, text=f"搜尋低於此價格", command=searchPrice, width=36, bd=0, fg="white", bg="black",height=2).grid(column=4, row=2, columnspan=2, pady=5)
+        tk.Button(topFrame, text=f"搜尋股號", command=searchId, width=36, bd=0, fg="white", bg="black").grid(column=0, row=2, columnspan=2, pady=5)
+        tk.Button(topFrame, text=f"搜尋股名", command=searchName, width=36, bd=0, fg="white", bg="black").grid(column=2, row=2, columnspan=2, pady=5)
+        tk.Button(topFrame, text=f"搜尋低於此價格", command=searchPrice, width=36, bd=0, fg="white", bg="black").grid(column=4, row=2, columnspan=2, pady=5)
         tk.Button(topFrame, text=f"低於合理價", command=updateStockScreen_50, width=36, bd=0, fg="white", bg="black",height=2).grid(column=0, row=3, columnspan=2, pady=5)
         tk.Button(topFrame, text=f"低於便宜價", command=updateStockScreen_66, width=36, bd=0, fg="white", bg="black",height=2).grid(column=2, row=3, columnspan=2, pady=5)
         tk.Button(topFrame, text=f"低於超低價", command=updateStockScreen_99, width=36, bd=0, fg="white", bg="black",height=2).grid(column=4, row=3, columnspan=2, pady=5)
