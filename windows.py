@@ -32,6 +32,7 @@ class MainLabelFrame(tk.LabelFrame):
         topFrame = tk.Frame(self)
         topFrame.pack(pady=20)
         self.topFrame = topFrame
+        self.autoUpdate = True
 
         self.treeViewStock = ttk.Treeview(self,columns=('id','name','classification','d_yield','price','5y_EPS','5y_yield','5y_yield2','judge'),show="headings")
         self.treeViewDividend = ttk.Treeview(self,columns=('year','income','gross_profit','gross_margin','EPS','cash_dividends','stock_dividends'),show="headings")
@@ -78,11 +79,9 @@ class MainLabelFrame(tk.LabelFrame):
         listStockInfo = GetData().getStockInfo(id)
         priceNow = float(Spider(id).getPriceNow())
         yieldNow = float(GetData().getLastDividend(id))
-        autoUpdate = True
-        print(listStockInfo)
+        self.autoUpdate = True
         def updatePriceNow():
-            print("autoUpdate:",autoUpdate)
-            if autoUpdate == False:
+            if self.autoUpdate == False:
                 return
             priceNow = float(Spider(id).getPriceNow())
             boxPrice.configure(text=f"{Spider(id).getPriceNow()}")
@@ -91,7 +90,7 @@ class MainLabelFrame(tk.LabelFrame):
             self.after(60 * 1000, updatePriceNow)
         def backScotkList():
             topFrame.destroy()
-            autoUpdate = False
+            self.autoUpdate = False
             self.treeViewDividend.pack_forget()
             self.treeViewProfit.pack_forget()
             self.topFrame.pack()
