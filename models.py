@@ -177,6 +177,7 @@ class Spider:
 
     def getProfit(self):
         if self.getGrossMargin() is not None and self.getEps() is not None and self.gerDividend() is not None:
+            self.getDividendPayment()
             for item in list(self.listDividend.values()):
                 year = int(item['year'])
                 localeTime = time.gmtime().tm_year
