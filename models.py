@@ -83,14 +83,14 @@ class Spider:
                 quarter = u1[i].text.replace(" ", "")
                 income = int(u2[i].text.replace(",", ""))
                 grossProfit = int(u3[i].text.replace(",", ""))
-                grossMargin = grossProfit / income
+                # grossMargin = grossProfit / income
                 # print(quarter,income,gross_profit,gross_margin)
                 self.listProfit[quarter] = {"quarter": quarter, "income": income, "gross_profit": grossProfit, "EPS": 0}
                 year = quarter[0:4:1]
                 if year in self.listDividend:
                     income += income
                     grossProfit += grossProfit
-                    grossMargin = grossProfit / income
+                    #grossMargin = grossProfit / income
                     self.listDividend[year]["income"] = income
                     self.listDividend[year]["gross_profit"] = grossProfit
                     #self.listDividend[year]["gross_margin"] = grossMargin
@@ -180,7 +180,7 @@ class Spider:
             for item in list(self.listDividend.values()):
                 year = int(item['year'])
                 localeTime = time.gmtime().tm_year
-                if year == localeTime or (item['year'] == localeTime - 1 and self.id not in self.listDividendPayment):
+                if year == localeTime or (year == localeTime - 1 and self.id not in self.listDividendPayment):
                     self.listDividend[str(year)]['payment'] = 0
                 else:
                     self.listDividend[str(year)]['payment'] = 1
@@ -225,7 +225,7 @@ class Spider:
 
 class UpdateData:
     def __init__(self):
-        self.listInfo = Spider().getPrice()
+        self.listInfo = Spider().getStockInfo()
         self.listStockId = list()
         self.dbFile = 'yield.db'
         # print(self.listInfo)
@@ -243,6 +243,7 @@ class UpdateData:
     def createProfitTable(self, conn):
         sql = '''
             CREATE TABLE IF NOT EXISTS profit(
+                id TEXT PRIMARY KEY,
                 stock_id TEXT,
                 quarter TEXT,
                 income INTEGER,
@@ -260,20 +261,21 @@ class UpdateData:
     def replaceProfitData(self, conn, id, dataList):
         sql = '''
         INSERT or replace INTO 
-        profit(stock_id,quarter,income,gross_profit,EPS)
-        VALUES( ?,?,?,?,?)
+        profit(id,stock_id,quarter,income,gross_profit,EPS)
+        VALUES( ?,?,?,?,?,?)
         '''.format(id)
 
         try:
             curser = conn.cursor()
             for item in dataList.values():
                 print(item)
+                pid = id + item['quarter']
                 stock_id = id
                 quarter = item['quarter']
                 income = item['income']
                 gross_profit = item['gross_profit']
                 EPS = item['EPS']
-                curser.execute(sql, (stock_id, quarter, income, gross_profit, EPS))
+                curser.execute(sql, (pid, stock_id, quarter, income, gross_profit, EPS))
         except  sqlite3Error as e:
             print(e)
         conn.commit()
@@ -281,8 +283,9 @@ class UpdateData:
     def createDividendTable(self, conn):
         sql = '''
             CREATE TABLE IF NOT EXISTS dividend(
+                id TEXT PRIMARY KEY,
                 stock_id TEXT,
-                year TEXT PRIMARY KEY,
+                year TEXT,
                 income INTEGER,
                 gross_profit INTEGER,
                 EPS REAL,
@@ -300,14 +303,15 @@ class UpdateData:
     def replaceDividendData(self, conn, id, dataList):
         sql = '''
         INSERT or replace INTO 
-        dividend(stock_id,year,income,gross_profit,EPS,cash_dividends,stock_dividends,payment)
-        VALUES( ?,?,?,?,?,?,?,?)
+        dividend(id,stock_id,year,income,gross_profit,EPS,cash_dividends,stock_dividends,payment)
+        VALUES( ?,?,?,?,?,?,?,?,?)
         '''.format(id)
 
         try:
             curser = conn.cursor()
             for item in dataList.values():
                 print(item)
+                pid = id + item['year']
                 stock_id = id
                 year = item['year']
                 income = item['income']
@@ -316,7 +320,7 @@ class UpdateData:
                 cash_dividends = item['cash_dividends']
                 stock_dividends = item['stock_dividends']
                 payment = item['payment']
-                curser.execute(sql, (stock_id,year, income, gross_profit, EPS, cash_dividends, stock_dividends, payment))
+                curser.execute(sql, (pid, stock_id,year, income, gross_profit, EPS, cash_dividends, stock_dividends, payment))
         except  sqlite3Error as e:
             print(e)
         conn.commit()
@@ -426,7 +430,7 @@ class UpdateData:
                 if ctype == 99:
                     return
                 elif ctype == 0:
-                    newInfo = Spider(item['id']).getStockInfo()
+                    newInfo = Spider(item['id']).getProfile()
                     item['time_to_market'] = newInfo['上市時間'] or ""
                     item['classification'] = newInfo['產業類別'] or ""
                     item['share_capital'] = newInfo['股本'] or "0"
@@ -440,6 +444,7 @@ class UpdateData:
                     item['share_capital'] = stock[7]
                     item['IHOLD'] = stock[8]
                 item['update_time'] = update_time
+                print(item)
                 self.listStockId.append(item['id'])
                 self.replaceStockData(conn, item)
 
@@ -447,6 +452,7 @@ class UpdateData:
         self.updateCompanyInfo()
         for item in self.listStockId:
             self.updateProfitAndDividendInfo(item)
+            time.sleep(1)
 
 class GetData(UpdateData):
     def __init__(self):
@@ -464,12 +470,12 @@ class GetData(UpdateData):
             return
         return conn
 
-    def getListStock(self):
+    def getListStock(self,key,link,value):
         conn = self.createConnection()
-        sql = '''
+        sql = f'''
             SELECT id,name,classification,d_yield,price
             FROM stock
-            WHERE d_yield >= 10 OR id = "2330"
+            WHERE {key} {link} {value}
             '''
         rows = list()
         with conn:
@@ -477,10 +483,11 @@ class GetData(UpdateData):
             try:
                 cursor.execute(sql)
                 rows = cursor.fetchall()
-                print(rows)
+                #print(rows)
             except sqlite3Error as e:
                 print(e)
         return rows
+
 
     def getSumInfo(self,id):
         conn = self.createConnection()
@@ -518,6 +525,65 @@ class GetData(UpdateData):
             except sqlite3Error as e:
                 print(e)
         return rows
+
+    def getListProfit(self,id):
+        conn = self.createConnection()
+        sql = '''
+            SELECT quarter,income,gross_profit,EPS
+            FROM profit
+            WHERE stock_id = '{}'
+            '''.format(id)
+        rows = list()
+        with conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql)
+                rows = cursor.fetchall()
+                # print(rows)
+            except sqlite3Error as e:
+                print(e)
+        return rows
+
+    def getStockInfo(self,id):
+        UpdateData().updateProfitAndDividendInfo(id)
+        conn = self.createConnection()
+        sql = '''
+            SELECT id,name,price,time_to_market,classification,share_capital,IHOLD
+            FROM stock
+            WHERE id = '{}'
+            '''.format(id)
+        rows = list()
+        with conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql)
+                rows = cursor.fetchone()
+                # print(rows)
+            except sqlite3Error as e:
+                print(e)
+        return rows
+
+    def getLastDividend(self,id):
+        conn = self.createConnection()
+        sql = '''
+            SELECT cash_dividends
+            FROM dividend
+            WHERE payment = 1 AND stock_id = '{}'
+            limit 0, 1
+            '''.format(id)
+        rows = list()
+        with conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql)
+                rows = cursor.fetchone()
+                print(rows)
+            except sqlite3Error as e:
+                print(e)
+        if rows is None or len(rows) == 0:
+            return 0
+        else:
+            return rows[0]
 
 
 
