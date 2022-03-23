@@ -212,7 +212,11 @@ class Spider:
             # print('證券代號->',i[0],'證券名稱=',i[1], '成交股數=',i[2], '成交金額=',i[3],'開盤價=',i[4], '最高價=',i[5],'最低價=',i[6], '收盤價=',i[7], '漲跌價差=',i[8], '成交筆數=',i[9])
             if i[0] in self.listCompany:
                 i[7] = 0.0 if i[7] == "" else float(i[7])
+                newData = GetData().getLastDividend(i[0])
                 self.listCompany[i[0]]['price'] = i[7]
+                if newData != 0 and i[7]!=0:
+                    self.listCompany[i[0]]['PE'] = newData[1]
+                    self.listCompany[i[0]]['d_yield'] = round((newData[0]/i[7])*10000)/100
             if i[0] == "":
                 break
         # print(self.listCompany)
@@ -337,8 +341,8 @@ class UpdateData:
             self.createDividendTable(conn)
             self.replaceDividendData(conn, id, dividend)
             if autoUpdateRecord:
-                self.createDividendTable(conn)
-                self.replaceDividendData(conn, id, updateRecord)
+                #self.createUpdateRecordTable(conn)
+                self.replaceUpdateRecordData(conn, updateRecord)
 
     def createUpdateRecordTable(self, conn):
         sql = '''
@@ -449,19 +453,20 @@ class UpdateData:
 
     def updateCompanyInfo(self,item):
         #for item in list(self.listInfo.values()):
-            # print(item)
+            self.listStockId.append(item['id'])
             conn = self.createConnection()
-            update_time = int(
+            updateTime = int(
                 "{:0>4}{:0>2}{:0>2}".format(time.gmtime().tm_year, time.gmtime().tm_mon, time.gmtime().tm_mday))
             with conn:
+                self.createUpdateRecordTable(conn)
                 self.createStockTable(conn)
                 ctype = 99
                 stock = self.getStockData(conn, item['id'])
                 if self.checkStockCount(conn, item['id']) == 0:
                     ctype = 0
-                elif update_time - 7 > stock[9] or (time.gmtime().tm_mday % 5 == 0 and update_time != stock[9]):
+                elif updateTime - 7 > stock[9] or (time.gmtime().tm_mday % 5 == 0 and updateTime != stock[9]):
                     ctype = 0
-                elif update_time != stock[9]:
+                elif updateTime != stock[9]:
                     ctype = 1
                 if ctype == 99:
                     return
@@ -473,25 +478,26 @@ class UpdateData:
                     item['share_capital'] = int(item['share_capital'].replace(",", ""))
                     item['IHOLD'] = newInfo['董監持股比例(%)'] or "0.0"
                     item['IHOLD'] = float(item['IHOLD'])
-                    time.sleep(1)
+                    time.sleep(3)
                 else:
                     item['time_to_market'] = stock[5]
                     item['classification'] = stock[6]
                     item['share_capital'] = stock[7]
                     item['IHOLD'] = stock[8]
-                item['update_time'] = update_time
-                #print(item)
-                self.listStockId.append(item['id'])
+                item['update_time'] = updateTime
+                #self.listStockId.append(item['id'])
                 self.replaceStockData(conn, item)
 
     def createDatabase(self):
         for item in list(self.listInfo.values()):
             self.updateCompanyInfo(item)
-            time.sleep(3)
         r = GetData().getUpdateRecord("stock")
+        updateTime = int("{:0>4}{:0>2}{:0>2}".format(time.gmtime().tm_year, time.gmtime().tm_mon, time.gmtime().tm_mday))
         index = 0
-        if r[0] in self.listStockId and r[0] != self.listStockId(len(self.listStockId) - 1):
+        if r[0] in self.listStockId:
             index = self.listStockId.index(r[0])
+            if r[0] == self.listStockId[len(self.listStockId) - 1] and updateTime - 7 > r[1]:
+                index = 0
         for i in range(index,len(self.listStockId) - 1):
             #self.updateProfitAndDividendInfo(self.listStockId[i])
             self.updateProfitAndDividendInfo(self.listStockId[i])
@@ -630,7 +636,7 @@ class GetData(UpdateData):
     def getLastDividend(self,id):
         conn = self.createConnection()
         sql = '''
-            SELECT cash_dividends
+            SELECT cash_dividends,year
             FROM dividend
             WHERE payment = 1 AND stock_id = '{}'
             limit 0, 1
@@ -647,7 +653,7 @@ class GetData(UpdateData):
         if rows is None or len(rows) == 0:
             return 0
         else:
-            return rows[0]
+            return rows
 
 
 

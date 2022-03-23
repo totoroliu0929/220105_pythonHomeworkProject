@@ -1,8 +1,8 @@
 import time
 
 from models import Spider, UpdateData, GetData
-
-print('wwww',GetData().getUpdateRecord("1234"))
+x = GetData().getLastDividend("2330")
+print('wwww',GetData().getUpdateRecord("stock")[0])
 
 x = Spider("2330")
 x.getDividendPayment()

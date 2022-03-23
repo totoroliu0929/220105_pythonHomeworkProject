@@ -77,15 +77,20 @@ class MainLabelFrame(tk.LabelFrame):
 
     def createCheckStockLabel(self, id):
         listStockInfo = GetData().getStockInfo(id)
-        priceNow = float(Spider(id).getPriceNow())
-        yieldNow = float(GetData().getLastDividend(id))
+        priceNow = tk.StringVar()
+        yieldNow = tk.StringVar()
+        priceNowValue = float(Spider(id).getPriceNow())
+        yieldNowValue = round(float(GetData().getLastDividend(id)[0]) / priceNowValue * 10000) / 100
+        priceNow.set(str(priceNowValue))
+        yieldNow.set(str(yieldNowValue)+"%")
         self.autoUpdate = True
         def updatePriceNow():
             if self.autoUpdate == False:
                 return
-            priceNow = float(Spider(id).getPriceNow())
-            boxPrice.configure(text=f"{Spider(id).getPriceNow()}")
-            boxYield.configure(text="{}%".format(round(yieldNow/priceNow*10000)/100))
+            priceNowValue = float(Spider(id).getPriceNow())
+            yieldNowValue = round(float(GetData().getLastDividend(id)[0]) / priceNowValue * 10000) / 100
+            priceNow.set(str(priceNowValue))
+            yieldNow.set(str(yieldNowValue)+"%")
             # self.box.pack(padx=10, pady=10)
             self.after(60 * 1000, updatePriceNow)
         def backScotkList():
@@ -108,8 +113,8 @@ class MainLabelFrame(tk.LabelFrame):
         topFrame = tk.Frame(self)
         topFrame.pack()
         print(yieldNow)
-        boxPrice = tk.Label(topFrame, text=f"{priceNow}", anchor="w",width=15)
-        boxYield = tk.Label(topFrame, text="{}%".format(round(yieldNow/priceNow*10000)/100), anchor="w",width=15)
+        boxPrice = tk.Label(topFrame, textvariable = priceNow, anchor="w",width=15)
+        boxYield = tk.Label(topFrame, textvariable = yieldNow, anchor="w",width=15)
         tk.Label(topFrame, text=f"股號：", anchor="e",width=15).grid(column=0, row=0, pady=5)
         tk.Label(topFrame, text=f"{listStockInfo[0]}", anchor="w",width=15).grid(column=1, row=0, pady=5)
         tk.Label(topFrame, text=f"上市公司：", anchor="e",width=15).grid(column=2, row=0, pady=5)
