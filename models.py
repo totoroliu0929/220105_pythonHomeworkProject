@@ -326,14 +326,49 @@ class UpdateData:
             print(e)
         conn.commit()
 
-    def updateProfitAndDividendInfo(self, id):
+    def updateProfitAndDividendInfo(self, id, autoUpdateRecord=True):
         dividend, profit = Spider(id).getProfit()
         conn = self.createConnection()
+        update_time = int("{:0>4}{:0>2}{:0>2}".format(time.gmtime().tm_year, time.gmtime().tm_mon, time.gmtime().tm_mday))
+        updateRecord = {"id":"stock","stock_id":id,"update_time":update_time}
         with conn:
             self.createProfitTable(conn)
             self.replaceProfitData(conn, id, profit)
             self.createDividendTable(conn)
             self.replaceDividendData(conn, id, dividend)
+            if autoUpdateRecord:
+                self.createDividendTable(conn)
+                self.replaceDividendData(conn, id, updateRecord)
+
+    def createUpdateRecordTable(self, conn):
+        sql = '''
+             CREATE TABLE IF NOT EXISTS update_record(
+                id TEXT PRIMARY KEY,
+                stock_id TEXT NOT NULL,
+                update_time INTEGER
+            );
+            '''
+        cursor = conn.cursor()
+        try:
+            cursor.execute(sql)
+        except sqlite3Error as e:
+            print(e)
+
+    def replaceUpdateRecordData(self, conn, item):
+        sql = '''
+            INSERT or replace INTO 
+            update_record(id,stock_id,update_time)
+            VALUES( ?,?,?)
+            '''
+        try:
+            curser = conn.cursor()
+            id = item['id']
+            stock_id = item['stock_id']
+            update_time = item['update_time']
+            curser.execute(sql, ( id, stock_id, update_time))
+        except  sqlite3Error as e:
+            print(e)
+        conn.commit()
 
     def createStockTable(self, conn):
         sql = '''
@@ -412,8 +447,8 @@ class UpdateData:
             print(e)
         return row
 
-    def updateCompanyInfo(self):
-        for item in list(self.listInfo.values()):
+    def updateCompanyInfo(self,item):
+        #for item in list(self.listInfo.values()):
             # print(item)
             conn = self.createConnection()
             update_time = int(
@@ -445,15 +480,22 @@ class UpdateData:
                     item['share_capital'] = stock[7]
                     item['IHOLD'] = stock[8]
                 item['update_time'] = update_time
-                print(item)
+                #print(item)
                 self.listStockId.append(item['id'])
                 self.replaceStockData(conn, item)
 
     def createDatabase(self):
-        self.updateCompanyInfo()
-        for item in self.listStockId:
-            self.updateProfitAndDividendInfo(item)
-            time.sleep(1)
+        for item in list(self.listInfo.values()):
+            self.updateCompanyInfo(item)
+            time.sleep(3)
+        r = GetData().getUpdateRecord("stock")
+        index = 0
+        if r[0] in self.listStockId and r[0] != self.listStockId(len(self.listStockId) - 1):
+            index = self.listStockId.index(r[0])
+        for i in range(index,len(self.listStockId) - 1):
+            #self.updateProfitAndDividendInfo(self.listStockId[i])
+            self.updateProfitAndDividendInfo(self.listStockId[i])
+            time.sleep(3)
 
 class GetData(UpdateData):
     def __init__(self):
@@ -470,6 +512,27 @@ class GetData(UpdateData):
             print(e)
             return
         return conn
+
+    def getUpdateRecord(self, id):
+        conn = self.createConnection()
+        sql = f'''
+            SELECT stock_id,update_time
+            FROM update_record
+            WHERE id = '{id}'
+            '''
+        rows = list()
+        with conn:
+            cursor = conn.cursor()
+            try:
+                cursor.execute(sql)
+                rows = cursor.fetchone()
+                # print(rows)
+            except sqlite3Error as e:
+                print(e)
+        if rows is None or len(rows) == 0:
+            return 0
+        else:
+            return rows
 
     def getListStock(self,key,link,value):
         conn = self.createConnection()
@@ -546,7 +609,7 @@ class GetData(UpdateData):
         return rows
 
     def getStockInfo(self,id):
-        UpdateData().updateProfitAndDividendInfo(id)
+        UpdateData().updateProfitAndDividendInfo(id,False)
         conn = self.createConnection()
         sql = '''
             SELECT id,name,price,time_to_market,classification,share_capital,IHOLD

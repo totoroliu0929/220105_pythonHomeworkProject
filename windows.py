@@ -1,7 +1,7 @@
 import time
 import tkinter
 
-from models import Spider,GetData
+from models import Spider,GetData,UpdateData
 import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
