@@ -496,8 +496,8 @@ class UpdateData:
         index = 0
         if r[0] in self.listStockId:
             index = self.listStockId.index(r[0])
-            if r[0] == self.listStockId[len(self.listStockId) - 1] and updateTime - 7 > r[1]:
-                index = 0
+        if updateTime - 7 > r[1]:
+            index = 0
         for i in range(index,len(self.listStockId) - 1):
             #self.updateProfitAndDividendInfo(self.listStockId[i])
             self.updateProfitAndDividendInfo(self.listStockId[i])
