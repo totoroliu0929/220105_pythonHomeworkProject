@@ -540,12 +540,12 @@ class GetData(UpdateData):
         else:
             return rows
 
-    def getListStock(self,key,link,value):
+    def getListStock(self,key):
         conn = self.createConnection()
         sql = f'''
             SELECT id,name,classification,d_yield,price
             FROM stock
-            WHERE {key} {link} {value}
+            WHERE {key}
             '''
         rows = list()
         with conn:

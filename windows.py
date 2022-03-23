@@ -1,10 +1,10 @@
-import time
 import tkinter
 
 from models import Spider,GetData,UpdateData
 import tkinter as tk
 from tkinter import ttk
 from datetime import datetime
+import webbrowser
 
 class Window(tk.Tk):
     def __init__(self):
@@ -42,8 +42,9 @@ class MainLabelFrame(tk.LabelFrame):
 
     def createTopFrameObjects(self):
         def checkSearch():
-            if value.get() is False:
-                message.configure(text="請填入有效的內容進行搜尋")
+            print(value.get())
+            if value.get().strip() == "":
+                message.set("請填入有效的內容進行搜尋")
                 return False
             return True
         def updateStockScreen_50():
@@ -54,22 +55,30 @@ class MainLabelFrame(tk.LabelFrame):
             self.updateStockScreen(value=10)
         def searchId():
             if checkSearch() != False:
-                self.updateStockScreen("id","=",f"{value.get()}")
+                key = value.get().split(",")
+                self.updateStockScreen("id = '{}'".format("' OR id = '".join(key)))
         def searchName():
             if checkSearch() != False:
-                self.updateStockScreen("name","like",f"'%{value.get()}%'")
+                key = value.get().split(",")
+                self.updateStockScreen("name like '%{}%'".format("%' OR name like '%".join(key)))
         def searchPrice():
             if checkSearch() != False:
-                self.updateStockScreen("price","<=",f"{value.get()}")
+                key = value.get().split(",")
+                if len(key) == 1:
+                    self.updateStockScreen(f"price <= {value.get()}")
+                else:
+                    self.updateStockScreen(f"price <= {max(key)} AND price >= {min(key)}")
         topFrame = self.topFrame
         value = tk.StringVar()
         value.set("")
-        message = tk.Label(topFrame, text="可利用以下欄位進行搜尋", anchor="center",width=36).grid(column=2, row=0, columnspan=2, pady=5)
+        message = tk.StringVar()
+        message.set("可利用以下欄位進行搜尋")
+        tk.Label(topFrame, textvariable=message, anchor="center",width=36).grid(column=2, row=0, columnspan=2, pady=5)
         input = tk.Entry(topFrame, width=36, textvariable=value)
         input.grid(column=2, row=1, columnspan=2, pady=5)
         tk.Button(topFrame, text=f"搜尋股號", command=searchId, width=36, bd=0, fg="white", bg="black").grid(column=0, row=2, columnspan=2, pady=5)
         tk.Button(topFrame, text=f"搜尋股名", command=searchName, width=36, bd=0, fg="white", bg="black").grid(column=2, row=2, columnspan=2, pady=5)
-        tk.Button(topFrame, text=f"搜尋低於此價格", command=searchPrice, width=36, bd=0, fg="white", bg="black").grid(column=4, row=2, columnspan=2, pady=5)
+        tk.Button(topFrame, text=f"搜尋價格", command=searchPrice, width=36, bd=0, fg="white", bg="black").grid(column=4, row=2, columnspan=2, pady=5)
         tk.Button(topFrame, text=f"低於合理價", command=updateStockScreen_50, width=36, bd=0, fg="white", bg="black",height=2).grid(column=0, row=3, columnspan=2, pady=5)
         tk.Button(topFrame, text=f"低於便宜價", command=updateStockScreen_66, width=36, bd=0, fg="white", bg="black",height=2).grid(column=2, row=3, columnspan=2, pady=5)
         tk.Button(topFrame, text=f"低於超低價", command=updateStockScreen_99, width=36, bd=0, fg="white", bg="black",height=2).grid(column=4, row=3, columnspan=2, pady=5)
@@ -79,7 +88,7 @@ class MainLabelFrame(tk.LabelFrame):
         listStockInfo = GetData().getStockInfo(id)
         priceNow = tk.StringVar()
         yieldNow = tk.StringVar()
-        priceNowValue = float(Spider(id).getPriceNow())
+        priceNowValue = float(Spider(id).getPriceNow().replace(",", ""))
         yieldNowValue = round(float(GetData().getLastDividend(id)[0]) / priceNowValue * 10000) / 100
         priceNow.set(str(priceNowValue))
         yieldNow.set(str(yieldNowValue)+"%")
@@ -87,7 +96,7 @@ class MainLabelFrame(tk.LabelFrame):
         def updatePriceNow():
             if self.autoUpdate == False:
                 return
-            priceNowValue = float(Spider(id).getPriceNow())
+            priceNowValue = float(Spider(id).getPriceNow().replace(",", ""))
             yieldNowValue = round(float(GetData().getLastDividend(id)[0]) / priceNowValue * 10000) / 100
             priceNow.set(str(priceNowValue))
             yieldNow.set(str(yieldNowValue)+"%")
@@ -110,13 +119,17 @@ class MainLabelFrame(tk.LabelFrame):
             buttonGotoProfit.configure(bg="blue")
             self.treeViewDividend.pack_forget()
             self.treeViewProfit.pack()
+        def callback(url):
+            webbrowser.open_new(url)
         topFrame = tk.Frame(self)
         topFrame.pack()
-        print(yieldNow)
+        #print(yieldNow)
         boxPrice = tk.Label(topFrame, textvariable = priceNow, anchor="w",width=15)
         boxYield = tk.Label(topFrame, textvariable = yieldNow, anchor="w",width=15)
         tk.Label(topFrame, text=f"股號：", anchor="e",width=15).grid(column=0, row=0, pady=5)
-        tk.Label(topFrame, text=f"{listStockInfo[0]}", anchor="w",width=15).grid(column=1, row=0, pady=5)
+        stockId = tk.Label(topFrame, text=f"{listStockInfo[0]}     (檢視)", anchor="w",width=15)
+        stockId.grid(column=1, row=0, pady=5)
+        stockId.bind("<Button-1>", lambda e: callback(f"https://tw.stock.yahoo.com/quote/{id}.TW"))
         tk.Label(topFrame, text=f"上市公司：", anchor="e",width=15).grid(column=2, row=0, pady=5)
         tk.Label(topFrame, text=f"{listStockInfo[1]}", anchor="w",width=15).grid(column=3, row=0, pady=5)
         tk.Label(topFrame, text=f"上市時間：", anchor="e",width=15).grid(column=4, row=0, pady=5)
@@ -240,7 +253,7 @@ class MainLabelFrame(tk.LabelFrame):
     def updateStockScreen(self,key="d_yield",link=">=",value=5):
         for i in self.treeViewStock.get_children():
             self.treeViewStock.delete(i)
-        response = GetData().getListStock(key,link,value)
+        response = GetData().getListStock(key)
         for item in response:
             item = list(item)
             #print("yyyy",item[0])
