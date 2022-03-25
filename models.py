@@ -501,7 +501,7 @@ class UpdateData:
         for i in range(index,len(self.listStockId)):
             #self.updateProfitAndDividendInfo(self.listStockId[i])
             self.updateProfitAndDividendInfo(self.listStockId[i])
-            time.sleep(3)
+            time.sleep(5)
 
 class GetData(UpdateData):
     def __init__(self):

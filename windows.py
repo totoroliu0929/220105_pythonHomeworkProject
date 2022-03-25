@@ -93,13 +93,13 @@ class MainLabelFrame(tk.LabelFrame):
         tk.Label(topFrame, textvariable=message, anchor="center",width=36).grid(column=0, row=0, columnspan=12, pady=5)
         input = tk.Entry(topFrame, width=36, textvariable=value)
         input.grid(column=4, row=1, columnspan=4, pady=5)
-        tk.Button(topFrame, text=f"搜尋股號", command=searchId, width=25, bd=0, fg="white", bg="black").grid(column=0, row=2, columnspan=3, pady=5)
-        tk.Button(topFrame, text=f"搜尋股名", command=searchName, width=25, bd=0, fg="white", bg="black").grid(column=3, row=2, columnspan=3, pady=5)
-        tk.Button(topFrame, text=f"搜尋價格", command=searchPrice, width=25, bd=0, fg="white", bg="black").grid(column=6, row=2, columnspan=3, pady=5)
-        tk.Button(topFrame, text=f"搜尋殖利率", command=searchYield, width=25, bd=0, fg="white", bg="black").grid(column=9, row=2, columnspan=3, pady=5)
-        tk.Button(topFrame, text=f"合理價", command=updateStockScreen_50, width=36, bd=0, fg="white", bg="black",height=2).grid(column=0, row=3, columnspan=4, pady=5)
-        tk.Button(topFrame, text=f"便宜價", command=updateStockScreen_66, width=36, bd=0, fg="white", bg="black",height=2).grid(column=4, row=3, columnspan=4, pady=5)
-        tk.Button(topFrame, text=f"超低價", command=updateStockScreen_99, width=36, bd=0, fg="white", bg="black",height=2).grid(column=8, row=3, columnspan=4, pady=5)
+        tk.Button(topFrame, text=f"搜尋股號", command=searchId, width=25, bd=0, fg="white", bg="black",height=2).grid(column=0, row=2, columnspan=3, pady=5)
+        tk.Button(topFrame, text=f"搜尋股名", command=searchName, width=25, bd=0, fg="white", bg="black",height=2).grid(column=3, row=2, columnspan=3, pady=5)
+        tk.Button(topFrame, text=f"搜尋價格", command=searchPrice, width=25, bd=0, fg="white", bg="black",height=2).grid(column=6, row=2, columnspan=3, pady=5)
+        tk.Button(topFrame, text=f"搜尋殖利率", command=searchYield, width=25, bd=0, fg="white", bg="black",height=2).grid(column=9, row=2, columnspan=3, pady=5)
+        tk.Button(topFrame, text=f"合理價", command=updateStockScreen_50, width=36, bd=0, fg="white", bg="black",height=1).grid(column=0, row=3, columnspan=4, pady=5)
+        tk.Button(topFrame, text=f"便宜價", command=updateStockScreen_66, width=36, bd=0, fg="white", bg="black",height=1).grid(column=4, row=3, columnspan=4, pady=5)
+        tk.Button(topFrame, text=f"超低價", command=updateStockScreen_99, width=36, bd=0, fg="white", bg="black",height=1).grid(column=8, row=3, columnspan=4, pady=5)
         self.updateStockScreen(10)
 
     def createCheckStockLabel(self, id):
@@ -127,7 +127,7 @@ class MainLabelFrame(tk.LabelFrame):
             priceNow.set(str(priceNowValue))
             yieldNow.set(str(yieldNowValue)+"%")
             # self.box.pack(padx=10, pady=10)
-            self.after(60 * 1000, updatePriceNow)
+            self.after(10 * 1000, updatePriceNow)
         def backScotkList():
             topFrame.destroy()
             self.autoUpdate = False
