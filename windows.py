@@ -127,7 +127,7 @@ class MainLabelFrame(tk.LabelFrame):
             priceNow.set(str(priceNowValue))
             yieldNow.set(str(yieldNowValue)+"%")
             # self.box.pack(padx=10, pady=10)
-            self.after(10 * 1000, updatePriceNow)
+            self.after(20 * 1000, updatePriceNow)
         def backScotkList():
             topFrame.destroy()
             self.autoUpdate = False
