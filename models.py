@@ -95,7 +95,7 @@ class Spider:
                     self.listDividend[year]["gross_profit"] = grossProfit
                     #self.listDividend[year]["gross_margin"] = grossMargin
                 else:
-                    self.listDividend[year] = {"year": year, "income": income, "gross_profit": grossProfit, "EPS": 0, "cash_dividends": -1.0, "stock_dividends": -1.0, "payment":0}
+                    self.listDividend[year] = {"year": year, "income": income, "gross_profit": grossProfit, "EPS": 0, "cash_dividends": 0.0, "stock_dividends": 0.0, "payment":0}
             return True
         else:
             return None
@@ -119,7 +119,7 @@ class Spider:
                     self.listDividend[year]["EPS"] = float(Decimal(self.listDividend[year]["EPS"]) + Decimal(eps))
                     #print(u1[i].text, eps)
                 else:
-                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "EPS": eps, "cash_dividends": -1.0, "stock_dividends": -1.0, "payment":0}
+                    self.listDividend[year] = {"year": year, "income": 0, "gross_profit": 0, "EPS": eps, "cash_dividends": 0.0, "stock_dividends": 0.0, "payment":0}
                     #print(u1[i].text, eps)
             #print(self.listDividend)
             #return self.listProfit

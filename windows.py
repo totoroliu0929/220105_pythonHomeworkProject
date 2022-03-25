@@ -48,56 +48,82 @@ class MainLabelFrame(tk.LabelFrame):
                 return False
             return True
         def updateStockScreen_50():
-            self.updateStockScreen(value=5)
+            self.updateStockScreen("d_yield < 6.6 AND d_yield >= 5")
         def updateStockScreen_66():
-            self.updateStockScreen(value=6.6)
+            self.updateStockScreen("d_yield < 10 AND d_yield >= 6.6")
         def updateStockScreen_99():
-            self.updateStockScreen(value=10)
+            self.updateStockScreen("d_yield >= 10")
         def searchId():
             if checkSearch() != False:
                 key = value.get().split(",")
+                message.set("搜尋股號"+"、".join(key))
                 self.updateStockScreen("id = '{}'".format("' OR id = '".join(key)))
         def searchName():
             if checkSearch() != False:
                 key = value.get().split(",")
+                message.set("搜尋股名含" + "、".join(key))
                 self.updateStockScreen("name like '%{}%'".format("%' OR name like '%".join(key)))
         def searchPrice():
             if checkSearch() != False:
                 key = value.get().split(",")
                 if len(key) == 1:
+                    message.set(f"搜尋每股價格{value.get()}元以下")
                     self.updateStockScreen(f"price <= {value.get()}")
                 else:
+                    key = [float(i) for i in key]
+                    message.set(f"搜尋每股價格介於{min(key)}至{max(key)}元")
                     self.updateStockScreen(f"price <= {max(key)} AND price >= {min(key)}")
+        def searchYield():
+            if checkSearch() != False:
+                key = value.get().split(",")
+                if len(key) == 1:
+                    message.set(f"搜尋殖利率{value.get()}%以上")
+                    self.updateStockScreen(f"d_yield >= {value.get()}")
+                    if float(value.get()) > 30:
+                        message.set(f"下列的股票有問題，快逃呀！")
+                else:
+                    key = [float(i) for i in key]
+                    message.set(f"搜尋殖利率介於{min(key)}%至{max(key)}%")
+                    self.updateStockScreen(f"d_yield <= {max(key)} AND d_yield >= {min(key)}")
         topFrame = self.topFrame
         value = tk.StringVar()
         value.set("")
         message = tk.StringVar()
         message.set("可利用以下欄位進行搜尋")
-        tk.Label(topFrame, textvariable=message, anchor="center",width=36).grid(column=2, row=0, columnspan=2, pady=5)
+        tk.Label(topFrame, textvariable=message, anchor="center",width=36).grid(column=0, row=0, columnspan=12, pady=5)
         input = tk.Entry(topFrame, width=36, textvariable=value)
-        input.grid(column=2, row=1, columnspan=2, pady=5)
-        tk.Button(topFrame, text=f"搜尋股號", command=searchId, width=36, bd=0, fg="white", bg="black").grid(column=0, row=2, columnspan=2, pady=5)
-        tk.Button(topFrame, text=f"搜尋股名", command=searchName, width=36, bd=0, fg="white", bg="black").grid(column=2, row=2, columnspan=2, pady=5)
-        tk.Button(topFrame, text=f"搜尋價格", command=searchPrice, width=36, bd=0, fg="white", bg="black").grid(column=4, row=2, columnspan=2, pady=5)
-        tk.Button(topFrame, text=f"低於合理價", command=updateStockScreen_50, width=36, bd=0, fg="white", bg="black",height=2).grid(column=0, row=3, columnspan=2, pady=5)
-        tk.Button(topFrame, text=f"低於便宜價", command=updateStockScreen_66, width=36, bd=0, fg="white", bg="black",height=2).grid(column=2, row=3, columnspan=2, pady=5)
-        tk.Button(topFrame, text=f"低於超低價", command=updateStockScreen_99, width=36, bd=0, fg="white", bg="black",height=2).grid(column=4, row=3, columnspan=2, pady=5)
+        input.grid(column=4, row=1, columnspan=4, pady=5)
+        tk.Button(topFrame, text=f"搜尋股號", command=searchId, width=25, bd=0, fg="white", bg="black").grid(column=0, row=2, columnspan=3, pady=5)
+        tk.Button(topFrame, text=f"搜尋股名", command=searchName, width=25, bd=0, fg="white", bg="black").grid(column=3, row=2, columnspan=3, pady=5)
+        tk.Button(topFrame, text=f"搜尋價格", command=searchPrice, width=25, bd=0, fg="white", bg="black").grid(column=6, row=2, columnspan=3, pady=5)
+        tk.Button(topFrame, text=f"搜尋殖利率", command=searchYield, width=25, bd=0, fg="white", bg="black").grid(column=9, row=2, columnspan=3, pady=5)
+        tk.Button(topFrame, text=f"合理價", command=updateStockScreen_50, width=36, bd=0, fg="white", bg="black",height=2).grid(column=0, row=3, columnspan=4, pady=5)
+        tk.Button(topFrame, text=f"便宜價", command=updateStockScreen_66, width=36, bd=0, fg="white", bg="black",height=2).grid(column=4, row=3, columnspan=4, pady=5)
+        tk.Button(topFrame, text=f"超低價", command=updateStockScreen_99, width=36, bd=0, fg="white", bg="black",height=2).grid(column=8, row=3, columnspan=4, pady=5)
         self.updateStockScreen(10)
 
     def createCheckStockLabel(self, id):
         listStockInfo = GetData().getStockInfo(id)
         priceNow = tk.StringVar()
         yieldNow = tk.StringVar()
-        priceNowValue = float(Spider(id).getPriceNow().replace(",", ""))
-        yieldNowValue = round(float(GetData().getLastDividend(id)[0]) / priceNowValue * 10000) / 100
+        priceNowValue = Spider(id).getPriceNow().replace(",", "")
+        try:
+            priceNowValue = float(priceNowValue)
+            yieldNowValue = round(float(GetData().getLastDividend(id)[0]) / priceNowValue * 10000) / 100
+        except:
+            yieldNowValue = round(float(GetData().getLastDividend(id)[0]) / listStockInfo[2] * 10000) / 100
         priceNow.set(str(priceNowValue))
         yieldNow.set(str(yieldNowValue)+"%")
         self.autoUpdate = True
         def updatePriceNow():
             if self.autoUpdate == False:
                 return
-            priceNowValue = float(Spider(id).getPriceNow().replace(",", ""))
-            yieldNowValue = round(float(GetData().getLastDividend(id)[0]) / priceNowValue * 10000) / 100
+            priceNowValue = Spider(id).getPriceNow().replace(",", "")
+            try:
+                priceNowValue = float(priceNowValue)
+                yieldNowValue = round(float(GetData().getLastDividend(id)[0]) / priceNowValue * 10000) / 100
+            except:
+                yieldNowValue = round(float(GetData().getLastDividend(id)[0]) / listStockInfo[2] * 10000) / 100
             priceNow.set(str(priceNowValue))
             yieldNow.set(str(yieldNowValue)+"%")
             # self.box.pack(padx=10, pady=10)
@@ -250,7 +276,7 @@ class MainLabelFrame(tk.LabelFrame):
                 self.createCheckStockLabel(item_text[0])
             return
 
-    def updateStockScreen(self,key="d_yield",link=">=",value=5):
+    def updateStockScreen(self,key="d_yield>=5"):
         for i in self.treeViewStock.get_children():
             self.treeViewStock.delete(i)
         response = GetData().getListStock(key)
