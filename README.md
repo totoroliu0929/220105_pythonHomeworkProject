@@ -71,7 +71,7 @@
 
 ## 🎬 Demo
 
-https://www.youtube.com/watch?v=Rx9m9WKR6NQ
+[https://www.youtube.com/watch?v=Rx9m9WKR6NQ](https://www.youtube.com/watch?v=Rx9m9WKR6NQ)
 
 ---
 
@@ -97,3 +97,4 @@ https://www.youtube.com/watch?v=Rx9m9WKR6NQ
 ## 🏆 備註
 
 本專案曾被課程老師選為優秀作品，並收錄於其 GitHub 作為展示案例。
+[https://github.com/roberthsu2003/pythonWindow/tree/master/%E5%AD%B8%E5%93%A1%E4%BD%9C%E5%93%81/%E5%8A%89%E6%B8%85%E5%90%89_%E5%AD%98%E8%82%A1%E8%BC%94%E5%8A%A9%E7%B3%BB%E7%B5%B1](https://github.com/roberthsu2003/pythonWindow/tree/master/學員作品/劉清吉_存股輔助系統)
